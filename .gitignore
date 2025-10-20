@@ -1,0 +1,28 @@
+# Node & pnpm
+node_modules/
+**/node_modules/
+**/.pnpm-store/
+
+# Build outputs
+**/dist/
+
+# Environment files
+.env
+.env.*
+
+# Logs & temp
+logs/
+**/*.log
+tmp/
+*.tmp
+
+# Database & cache artifacts
+data/ip2region.db
+data/*.log
+
+# Docker
+docker/*.pid
+
+# OS files
+Thumbs.db
+.DS_Store

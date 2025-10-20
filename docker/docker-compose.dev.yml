@@ -1,0 +1,44 @@
+services:
+  backend:
+    build:
+      context: ..
+      dockerfile: docker/backend.Dockerfile
+      target: dev
+    working_dir: /app/backend
+    command: sh -c "pnpm install && pnpm run dev"
+    environment:
+      - NODE_ENV=development
+      - CI=true
+    env_file:
+      - ../.env.dev
+    volumes:
+      - ../backend:/app/backend
+      - backend_node_modules:/app/backend/node_modules
+      - ../data/ip2region.xdb:/app/ip2region.xdb:ro
+    ports:
+      - "3000:3000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  mysql:
+    image: mysql:8.0
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: nowork
+      MYSQL_USER: nowork
+      MYSQL_PASSWORD: nowork
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data-dev:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  backend_node_modules:
+  mysql-data-dev:

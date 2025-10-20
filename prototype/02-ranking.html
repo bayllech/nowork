@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NoWork.click - 排行榜原型</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        /* 导航栏 */
+        .navbar {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: #667eea;
+        }
+
+        /* 主容器 */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* 页面标题 */
+        .page-header {
+            text-align: center;
+            color: white;
+            margin-bottom: 2rem;
+        }
+
+        .page-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .page-header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        /* 切换按钮组 */
+        .tab-controls {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .tab-btn {
+            padding: 0.8rem 2rem;
+            border: 2px solid white;
+            background: transparent;
+            color: white;
+            border-radius: 30px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .tab-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .tab-btn.active {
+            background: white;
+            color: #667eea;
+        }
+
+        /* 内容区域 */
+        .content-wrapper {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        /* 地图容器 */
+        .map-container {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .map-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .map-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .date-selector {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .date-selector select {
+            padding: 0.5rem 1rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+
+        /* 地图占位 */
+        .map-placeholder {
+            width: 100%;
+            height: 500px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 15px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .map-placeholder svg {
+            width: 80%;
+            height: 80%;
+            opacity: 0.3;
+        }
+
+        .map-placeholder-text {
+            position: absolute;
+            font-size: 1.2rem;
+            color: #666;
+            font-weight: bold;
+        }
+
+        /* 城市排行榜 */
+        .city-ranking {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .ranking-header {
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin-bottom: 1.5rem;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .ranking-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            margin-bottom: 0.8rem;
+            background: #f8f9fa;
+            border-radius: 10px;
+            transition: all 0.3s;
+        }
+
+        .ranking-item:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+
+        .rank-number {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-right: 1rem;
+        }
+
+        .rank-number.top1 {
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            color: white;
+        }
+
+        .rank-number.top2 {
+            background: linear-gradient(135deg, #C0C0C0, #A8A8A8);
+            color: white;
+        }
+
+        .rank-number.top3 {
+            background: linear-gradient(135deg, #CD7F32, #B8860B);
+            color: white;
+        }
+
+        .rank-number.normal {
+            background: #e0e0e0;
+            color: #666;
+        }
+
+        .city-info {
+            flex: 1;
+        }
+
+        .city-name {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 0.3rem;
+        }
+
+        .province-name {
+            font-size: 0.9rem;
+            color: #999;
+        }
+
+        .click-count {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        /* 海外排行榜 */
+        .global-ranking {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 2rem;
+        }
+
+        .global-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+
+        .country-card {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            transition: all 0.3s;
+        }
+
+        .country-card:hover {
+            background: #e9ecef;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .country-flag {
+            font-size: 2.5rem;
+        }
+
+        .country-info {
+            flex: 1;
+        }
+
+        .country-name {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 0.3rem;
+        }
+
+        .country-count {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 1024px) {
+            .content-wrapper {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .page-header h1 {
+                font-size: 2rem;
+            }
+
+            .tab-controls {
+                flex-direction: column;
+            }
+
+            .global-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .nav-links {
+                gap: 1rem;
+                font-size: 0.9rem;
+            }
+        }
+
+        /* 原型说明 */
+        .prototype-note {
+            position: fixed;
+            bottom: 1rem;
+            right: 1rem;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 1rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            font-size: 0.9rem;
+            color: #666;
+            max-width: 300px;
+        }
+
+        .prototype-note h4 {
+            color: #667eea;
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="logo">🚫 NoWork.click</div>
+        <ul class="nav-links">
+            <li><a href="01-homepage.html">首页</a></li>
+            <li><a href="02-ranking.html">排行榜</a></li>
+            <li><a href="03-roles.html">角色页</a></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+        <!-- 页面标题 -->
+        <div class="page-header">
+            <h1>🏆 全球打工人排行榜</h1>
+            <p>看看哪里的打工人压力最大</p>
+        </div>
+
+        <!-- 日榜/总榜切换 -->
+        <div class="tab-controls">
+            <button class="tab-btn active" id="dailyTab">今日排行</button>
+            <button class="tab-btn" id="totalTab">总排行</button>
+        </div>
+
+        <!-- 中国地图 + 城市排行 -->
+        <div class="content-wrapper">
+            <!-- 地图容器 -->
+            <div class="map-container">
+                <div class="map-header">
+                    <div class="map-title">🇨🇳 中国省市热力图</div>
+                    <div class="date-selector">
+                        <label>日期:</label>
+                        <select>
+                            <option>2025-10-20 (今天)</option>
+                            <option>2025-10-19</option>
+                            <option>2025-10-18</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- 地图占位 (实际开发使用 ECharts) -->
+                <div class="map-placeholder">
+                    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="10" y="20" width="30" height="25" fill="#4facfe" opacity="0.5"/>
+                        <rect x="45" y="15" width="35" height="30" fill="#ff6b6b" opacity="0.7"/>
+                        <rect x="25" y="50" width="40" height="30" fill="#ffd93d" opacity="0.6"/>
+                        <rect x="70" y="50" width="20" height="25" fill="#4facfe" opacity="0.4"/>
+                    </svg>
+                    <div class="map-placeholder-text">
+                        📍 ECharts 中国地图热力图<br>
+                        <span style="font-size: 0.9rem;">(颜色深度表示敲击次数)</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 城市排行榜 -->
+            <div class="city-ranking">
+                <div class="ranking-header">
+                    🏙️ Top 城市排行
+                </div>
+
+                <div class="ranking-item">
+                    <div class="rank-number top1">1</div>
+                    <div class="city-info">
+                        <div class="city-name">深圳市</div>
+                        <div class="province-name">广东省</div>
+                    </div>
+                    <div class="click-count">2,600</div>
+                </div>
+
+                <div class="ranking-item">
+                    <div class="rank-number top2">2</div>
+                    <div class="city-info">
+                        <div class="city-name">广州市</div>
+                        <div class="province-name">广东省</div>
+                    </div>
+                    <div class="click-count">1,800</div>
+                </div>
+
+                <div class="ranking-item">
+                    <div class="rank-number top3">3</div>
+                    <div class="city-info">
+                        <div class="city-name">北京市</div>
+                        <div class="province-name">北京市</div>
+                    </div>
+                    <div class="click-count">1,550</div>
+                </div>
+
+                <div class="ranking-item">
+                    <div class="rank-number normal">4</div>
+                    <div class="city-info">
+                        <div class="city-name">上海市</div>
+                        <div class="province-name">上海市</div>
+                    </div>
+                    <div class="click-count">1,420</div>
+                </div>
+
+                <div class="ranking-item">
+                    <div class="rank-number normal">5</div>
+                    <div class="city-info">
+                        <div class="city-name">杭州市</div>
+                        <div class="province-name">浙江省</div>
+                    </div>
+                    <div class="click-count">980</div>
+                </div>
+
+                <div class="ranking-item">
+                    <div class="rank-number normal">6</div>
+                    <div class="city-info">
+                        <div class="city-name">成都市</div>
+                        <div class="province-name">四川省</div>
+                    </div>
+                    <div class="click-count">860</div>
+                </div>
+
+                <div class="ranking-item">
+                    <div class="rank-number normal">7</div>
+                    <div class="city-info">
+                        <div class="city-name">南京市</div>
+                        <div class="province-name">江苏省</div>
+                    </div>
+                    <div class="click-count">720</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 海外排行榜 -->
+        <div class="global-ranking">
+            <div class="ranking-header">
+                🌍 海外国家排行
+            </div>
+
+            <div class="global-grid">
+                <div class="country-card">
+                    <div class="country-flag">🇺🇸</div>
+                    <div class="country-info">
+                        <div class="country-name">United States</div>
+                        <div class="country-count">320 次</div>
+                    </div>
+                </div>
+
+                <div class="country-card">
+                    <div class="country-flag">🇯🇵</div>
+                    <div class="country-info">
+                        <div class="country-name">Japan</div>
+                        <div class="country-count">180 次</div>
+                    </div>
+                </div>
+
+                <div class="country-card">
+                    <div class="country-flag">🇸🇬</div>
+                    <div class="country-info">
+                        <div class="country-name">Singapore</div>
+                        <div class="country-count">125 次</div>
+                    </div>
+                </div>
+
+                <div class="country-card">
+                    <div class="country-flag">🇬🇧</div>
+                    <div class="country-info">
+                        <div class="country-name">United Kingdom</div>
+                        <div class="country-count">98 次</div>
+                    </div>
+                </div>
+
+                <div class="country-card">
+                    <div class="country-flag">🇦🇺</div>
+                    <div class="country-info">
+                        <div class="country-name">Australia</div>
+                        <div class="country-count">87 次</div>
+                    </div>
+                </div>
+
+                <div class="country-card">
+                    <div class="country-flag">🇨🇦</div>
+                    <div class="country-info">
+                        <div class="country-name">Canada</div>
+                        <div class="country-count">76 次</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 原型说明 -->
+    <div class="prototype-note">
+        <h4>🎨 原型说明</h4>
+        <p><strong>排行榜页功能:</strong></p>
+        <ul style="padding-left: 1.2rem; margin-top: 0.5rem;">
+            <li>中国地图热力图(ECharts)</li>
+            <li>省市排行榜</li>
+            <li>海外国家排行</li>
+            <li>日榜/总榜切换</li>
+            <li>日期选择器</li>
+        </ul>
+    </div>
+
+    <script>
+        // 日榜/总榜切换
+        const dailyTab = document.getElementById('dailyTab');
+        const totalTab = document.getElementById('totalTab');
+
+        dailyTab.addEventListener('click', function() {
+            dailyTab.classList.add('active');
+            totalTab.classList.remove('active');
+            console.log('切换到今日排行');
+        });
+
+        totalTab.addEventListener('click', function() {
+            totalTab.classList.add('active');
+            dailyTab.classList.remove('active');
+            console.log('切换到总排行');
+        });
+    </script>
+</body>
+</html>
