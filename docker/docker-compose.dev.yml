@@ -9,6 +9,8 @@ services:
     environment:
       - NODE_ENV=development
       - CI=true
+      - MYSQL_HOST=mysql
+      - REDIS_HOST=redis
     env_file:
       - ../.env.dev
     volumes:
@@ -19,6 +21,8 @@ services:
       - "3000:3000"
     depends_on:
       mysql:
+        condition: service_healthy
+      redis:
         condition: service_healthy
 
   mysql:
@@ -39,6 +43,20 @@ services:
       timeout: 5s
       retries: 5
 
+  redis:
+    image: redis:7.2-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data-dev:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
 volumes:
   backend_node_modules:
   mysql-data-dev:
+  redis-data-dev:
