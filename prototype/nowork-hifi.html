@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>nowork.click 高保真原型</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700;900&family=Rubik:wght@500;700&display=swap');
+
+    :root {
+      --bg: #f3f2ff;
+      --ink: #1f1b2e;
+      --muted: #6c6683;
+      --accent: #6b4bff;
+      --accent-strong: #4137ff;
+      --warning: #ff7a7f;
+      --success: #5ed0b7;
+      --card: #ffffff;
+      --shadow: rgba(35, 20, 73, 0.12);
+      --button-glow: rgba(255, 122, 127, 0.45);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 48px;
+      background: radial-gradient(circle at top left, #ffffff 0%, var(--bg) 55%, #ebe9ff 100%);
+      font-family: 'Noto Sans SC', 'Rubik', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      color: var(--ink);
+    }
+
+    h1, h2, h3 {
+      margin: 0;
+      font-weight: 700;
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(520px, 620px));
+      gap: 48px;
+      justify-content: center;
+    }
+
+    .screen {
+      position: relative;
+      background: var(--card);
+      border-radius: 32px;
+      padding: 36px;
+      box-shadow: 0 28px 60px var(--shadow);
+      overflow: hidden;
+    }
+
+    .screen::after {
+      content: attr(data-label);
+      position: absolute;
+      top: 24px;
+      right: 36px;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: rgba(31, 27, 46, 0.15);
+    }
+
+    .hero-headline {
+      font-size: 36px;
+      line-height: 1.2;
+      margin-bottom: 16px;
+    }
+
+    .hero-sub {
+      font-size: 18px;
+      color: var(--muted);
+      margin-bottom: 28px;
+    }
+
+    .cta-area {
+      position: relative;
+      padding: 32px;
+      border-radius: 28px;
+      background: linear-gradient(135deg, rgba(255, 235, 238, 0.85), rgba(247, 233, 255, 0.95));
+      border: 1px solid rgba(107, 75, 255, 0.12);
+      box-shadow: 0 20px 40px rgba(255, 122, 127, 0.25);
+    }
+
+    .rage-button {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 260px;
+      border-radius: 40px;
+      background: radial-gradient(circle at top, #ffb2b6, #ff737a 65%, #ff4b54 85%);
+      color: #fff;
+      text-shadow: 0 8px 25px rgba(0, 0, 0, 0.18);
+      font-size: 48px;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      box-shadow: 0 32px 60px var(--button-glow);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .rage-button::before {
+      content: '不要命了 / HOLD TO SMASH';
+      position: absolute;
+      bottom: 20px;
+      font-size: 14px;
+      letter-spacing: 0.48em;
+      text-transform: uppercase;
+      opacity: 0.75;
+    }
+
+    .rage-meter {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .rage-meter .level {
+      height: 12px;
+      border-radius: 999px;
+      background: rgba(107, 75, 255, 0.12);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .rage-meter .level.active::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, #6b4bff, #4137ff);
+    }
+
+    .stats-bar {
+      margin-top: 28px;
+      padding: 18px 22px;
+      border-radius: 18px;
+      background: rgba(107, 75, 255, 0.12);
+      display: flex;
+      gap: 24px;
+      align-items: center;
+      color: var(--ink);
+      font-size: 16px;
+    }
+
+    .stats-bar span {
+      font-weight: 600;
+      color: var(--accent-strong);
+    }
+
+    .card-preview {
+      margin-top: 32px;
+      border-radius: 24px;
+      padding: 32px;
+      background: linear-gradient(135deg, #4137ff, #6b4bff);
+      color: #fff;
+      box-shadow: 0 18px 45px rgba(65, 55, 255, 0.35);
+      display: grid;
+      gap: 16px;
+    }
+
+    .card-preview .tag {
+      font-size: 12px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.18);
+      width: fit-content;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+    }
+
+    .card-preview h3 {
+      font-size: 26px;
+      line-height: 1.4;
+    }
+
+    .card-preview .meta {
+      display: flex;
+      gap: 18px;
+      font-size: 14px;
+      opacity: 0.85;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 28px;
+    }
+
+    .toolbar .tabs {
+      display: inline-flex;
+      padding: 6px;
+      border-radius: 999px;
+      background: rgba(107, 75, 255, 0.12);
+      gap: 6px;
+    }
+
+    .toolbar .tab {
+      padding: 10px 20px;
+      border-radius: 999px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--muted);
+      background: transparent;
+    }
+
+    .toolbar .tab.active {
+      background: #fff;
+      color: var(--accent-strong);
+      box-shadow: 0 10px 20px rgba(107, 75, 255, 0.15);
+    }
+
+    .map-panel {
+      border-radius: 26px;
+      background: linear-gradient(135deg, rgba(65, 55, 255, 0.12), rgba(107, 75, 255, 0.08));
+      padding: 24px;
+      min-height: 260px;
+      position: relative;
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      font-size: 14px;
+      letter-spacing: 0.3em;
+    }
+
+    .map-panel::after {
+      content: '中国热力层 / Heat Map';
+      position: absolute;
+      top: 24px;
+      left: 24px;
+      font-weight: 600;
+      letter-spacing: 0.28em;
+      font-size: 12px;
+      color: rgba(65, 55, 255, 0.6);
+    }
+
+    .ranking {
+      margin-top: 28px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .ranking-row {
+      display: grid;
+      grid-template-columns: 60px 1fr 120px 120px;
+      align-items: center;
+      padding: 14px 18px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.75);
+      backdrop-filter: blur(6px);
+      box-shadow: 0 10px 24px rgba(31, 27, 46, 0.06);
+      font-size: 15px;
+    }
+
+    .ranking-row.highlight {
+      background: linear-gradient(135deg, rgba(255, 235, 238, 0.8), rgba(247, 233, 255, 0.9));
+      box-shadow: 0 18px 30px rgba(255, 122, 127, 0.18);
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--accent-strong);
+      background: rgba(107, 75, 255, 0.12);
+    }
+
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 18px;
+      margin-top: 12px;
+    }
+
+    .role-card {
+      border-radius: 22px;
+      padding: 22px;
+      background: rgba(255, 255, 255, 0.82);
+      box-shadow: 0 16px 30px rgba(31, 27, 46, 0.08);
+      display: grid;
+      gap: 10px;
+    }
+
+    .role-card h4 {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--accent-strong);
+    }
+
+    .role-card p {
+      margin: 0;
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .role-card .cta {
+      justify-self: start;
+      margin-top: 6px;
+      padding: 8px 16px;
+      border-radius: 999px;
+      background: rgba(107, 75, 255, 0.16);
+      color: var(--accent-strong);
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+    }
+
+    .stage {
+      margin-top: 22px;
+      padding: 28px;
+      background: rgba(107, 75, 255, 0.08);
+      border-radius: 24px;
+      display: grid;
+      gap: 18px;
+    }
+
+    .stage-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .stage-header h3 {
+      font-size: 20px;
+    }
+
+    .stage-header .emotion {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 16px;
+      border-radius: 14px;
+      background: rgba(255, 122, 127, 0.12);
+      color: var(--warning);
+      font-weight: 600;
+      font-size: 13px;
+    }
+
+    .stage-msg {
+      font-size: 16px;
+      line-height: 1.7;
+      color: var(--ink);
+    }
+
+    .share-panel {
+      margin-top: 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .share-panel button {
+      padding: 10px 18px;
+      border: none;
+      border-radius: 999px;
+      font-size: 13px;
+      letter-spacing: 0.08em;
+      font-weight: 600;
+      color: #fff;
+      background: linear-gradient(135deg, #6b4bff, #4137ff);
+      box-shadow: 0 10px 20px rgba(107, 75, 255, 0.25);
+    }
+
+    .share-panel span {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .global-list {
+      margin-top: 18px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .global-card {
+      padding: 18px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.9);
+      box-shadow: 0 14px 24px rgba(31, 27, 46, 0.08);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .global-card strong {
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .global-card small {
+      color: var(--muted);
+      font-size: 12px;
+      letter-spacing: 0.18em;
+    }
+  </style>
+</head>
+<body>
+  <header style="max-width: 1180px;margin:0 auto 48px auto;text-align:center;">
+    <h1 style="font-size:48px;margin-bottom:14px;font-weight:900;">nowork.click 高保真产品原型</h1>
+    <p style="max-width:720px;margin:0 auto;color:var(--muted);line-height:1.7;font-size:16px;">
+      情绪释放平台面向打工人，在碎片时间通过极具参与感的猛敲操作释放“我就不想干”的情绪。原型覆盖首页、排行榜、角色专属页、吐槽卡片分享等全部关键场景，可直接用于视觉交接与前端实现。
+    </p>
+  </header>
+
+  <div class="board">
+    <!-- Screen 1: Home -->
+    <section class="screen" data-label="HOME">
+      <div class="pill">页面 01 · 立即摆烂</div>
+      <h2 class="hero-headline">今天不想干？猛敲这里！</h2>
+      <p class="hero-sub">识别你的愤怒频率，自动点亮怒气等级，随手生成可复制的吐槽卡片。</p>
+
+      <div class="cta-area">
+        <div class="rage-button">
+          我就不想干
+        </div>
+        <div class="rage-meter">
+          <div class="level active"></div>
+          <div class="level active"></div>
+          <div class="level"></div>
+          <div class="level"></div>
+        </div>
+        <div class="stats-bar">
+          今日已敲 <span>1,284 次</span> · 全球累计 <span>189,472 次</span> · 当前心情：<span>气到抖腿</span>
+        </div>
+      </div>
+
+      <div class="card-preview">
+        <div class="tag">吐槽卡 preview</div>
+        <h3>【甲方又提需求】刚上线的版本又要改？那我袜子都脱了你告诉我不游泳？</h3>
+        <div class="meta">
+          <span>今日怒气指数：Lv.2 暴躁摸鱼人</span>
+          <span>生成于 nowork.click</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Screen 2: China Ranking -->
+    <section class="screen" data-label="CN RANKING">
+      <div class="toolbar">
+        <div>
+          <div class="pill">页面 02 · 中国榜</div>
+          <h2 style="margin-top:12px;font-size:28px;">中国打工人怒气热力榜</h2>
+          <p class="hero-sub" style="margin-top:8px;">按省市维度实时点亮，怒气越大颜色越红，鼠标悬停可查看城市详情。</p>
+        </div>
+        <div class="tabs">
+          <div class="tab active">今日榜</div>
+          <div class="tab">总榜</div>
+        </div>
+      </div>
+
+      <div class="map-panel">
+        ◎ 省级热力层示意（ECharts China Map）
+      </div>
+
+      <div class="ranking">
+        <div class="ranking-row highlight">
+          <strong style="font-size:18px;color:var(--warning);">01</strong>
+          <span>广东省 · 深圳市</span>
+          <span style="font-weight:700;">15,892 次</span>
+          <span style="font-size:12px;color:var(--muted);">占比 12%</span>
+        </div>
+        <div class="ranking-row">
+          <strong>02</strong>
+          <span>上海市 · 浦东新区</span>
+          <span style="font-weight:600;">12,604 次</span>
+          <span style="font-size:12px;color:var(--muted);">占比 9%</span>
+        </div>
+        <div class="ranking-row">
+          <strong>03</strong>
+          <span>北京市 · 海淀区</span>
+          <span style="font-weight:600;">11,276 次</span>
+          <span style="font-size:12px;color:var(--muted);">占比 8%</span>
+        </div>
+        <div class="ranking-row">
+          <strong>04</strong>
+          <span>浙江省 · 杭州市</span>
+          <span style="font-weight:600;">9,842 次</span>
+          <span style="font-size:12px;color:var(--muted);">占比 7%</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Screen 3: Global Ranking -->
+    <section class="screen" data-label="GLOBAL">
+      <div class="toolbar">
+        <div>
+          <div class="pill">页面 03 · 海外榜</div>
+          <h2 style="margin-top:12px;font-size:28px;">全球打工人谁先爆炸？</h2>
+          <p class="hero-sub" style="margin-top:8px;">海外用户按国家排行，展示不同文化下的情绪热点。</p>
+        </div>
+        <div class="tabs">
+          <div class="tab active">今日榜</div>
+          <div class="tab">总榜</div>
+        </div>
+      </div>
+
+      <div class="global-list">
+        <div class="global-card" style="background:linear-gradient(135deg, rgba(255,235,238,0.9), rgba(255,218,230,0.85));">
+          <div>
+            <strong>United States</strong>
+            <div style="margin-top:6px;font-size:14px;color:var(--muted);">硅谷需求史诗级返工 · 24,587 次</div>
+          </div>
+          <small>#1</small>
+        </div>
+        <div class="global-card">
+          <div>
+            <strong>Japan</strong>
+            <div style="margin-top:6px;font-size:14px;color:var(--muted);">加班到末班车是常态 · 18,302 次</div>
+          </div>
+          <small>#2</small>
+        </div>
+        <div class="global-card">
+          <div>
+            <strong>Singapore</strong>
+            <div style="margin-top:6px;font-size:14px;color:var(--muted);">金融圈 KPI 季冲刺 · 11,927 次</div>
+          </div>
+          <small>#3</small>
+        </div>
+        <div class="global-card">
+          <div>
+            <strong>Germany</strong>
+            <div style="margin-top:6px;font-size:14px;color:var(--muted);">项目延误+会议爆棚 · 9,106 次</div>
+          </div>
+          <small>#4</small>
+        </div>
+      </div>
+    </section>
+
+    <!-- Screen 4: Role Landing -->
+    <section class="screen" data-label="ROLE HUB">
+      <div class="pill">页面 04 · 情景入口</div>
+      <h2 class="hero-headline">谁又惹你生气了？</h2>
+      <p class="hero-sub">按场景快速切换，选择触发你怒火的角色，立刻进入专属猛敲页面。</p>
+
+      <div class="card-grid" style="margin-top:20px;">
+        <div class="role-card">
+          <h4>甲方又提需求</h4>
+          <p>隔夜改版、反复横跳、永远说“就再调一点点”。</p>
+          <div class="cta">进入猛敲</div>
+        </div>
+        <div class="role-card">
+          <h4>老板 KPI 轰炸</h4>
+          <p>周报写成小说、会议开成脱口秀，怒气值+++。</p>
+          <div class="cta">进入猛敲</div>
+        </div>
+        <div class="role-card">
+          <h4>同事摸鱼甩锅</h4>
+          <p>“帮忙看个问题”成了你的下班计划，真是谢谢哦。</p>
+          <div class="cta">进入猛敲</div>
+        </div>
+        <div class="role-card">
+          <h4>通宵赶 ddl</h4>
+          <p>凌晨三点的工位灯和没喝完的咖啡，懂的都懂。</p>
+          <div class="cta">进入猛敲</div>
+        </div>
+      </div>
+
+      <div class="stage">
+        <div class="stage-header">
+          <h3>场景演示 · 甲方又双叒叕提需求</h3>
+          <div class="emotion">怒气等级：Lv.2 / 手抖阶段</div>
+        </div>
+        <div class="stage-msg">
+          “刚刚那版我觉得很好，但老板又想再年轻一点、活泼一点、科技一点，你看是不是一小时能调好？”<br>
+          —— 来自乙方设计师的血泪真实语录
+        </div>
+        <div class="share-panel">
+          <button>生成吐槽卡片</button>
+          <span>支持复制文字 / 下载卡片 / 一键转发同事群</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Screen 5: Card Share Detail -->
+    <section class="screen" data-label="CARD">
+      <div class="pill">页面 05 · 吐槽卡详情</div>
+      <h2 class="hero-headline">复制 & 分享 · 爆改你的朋友圈</h2>
+      <p class="hero-sub">点击即复制，也可下载高分辨率图片，用吐槽卡把怒气精准外发。</p>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start;margin-top:18px;">
+        <div style="background:linear-gradient(135deg,#4137ff,#6b4bff);border-radius:28px;padding:36px;box-shadow:0 24px 48px rgba(65,55,255,0.38);color:#fff;display:grid;gap:18px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <span style="font-size:13px;letter-spacing:0.2em;">BOSS 模式</span>
+            <span style="font-size:12px;opacity:0.8;">生成于 2025/10/20 21:12</span>
+          </div>
+          <h3 style="font-size:28px;line-height:1.5;font-weight:700;">今天的需求像流星雨，砸到我怀疑自己是颗许愿池。老板：这个按钮能不能再有灵魂一点？</h3>
+          <div style="display:flex;gap:16px;font-size:14px;opacity:0.85;">
+            <span>怒气等级：Lv.3 手抖状态</span>
+            <span>今日敲击：856 次</span>
+          </div>
+          <div style="display:flex;gap:12px;font-size:12px;">
+            <span style="padding:6px 12px;border-radius:12px;background:rgba(255,255,255,0.18);">#内卷现场</span>
+            <span style="padding:6px 12px;border-radius:12px;background:rgba(255,255,255,0.18);">#打工人自救</span>
+          </div>
+        </div>
+        <div style="display:grid;gap:18px;">
+          <div style="padding:18px 24px;border-radius:20px;background:rgba(107,75,255,0.08);">
+            <h4 style="margin-bottom:12px;font-size:18px;">分享选项</h4>
+            <ul style="margin:0;padding-left:18px;color:var(--muted);line-height:1.8;font-size:14px;">
+              <li>复制文案到剪贴板（自动携带怒气等级和敲击数据）</li>
+              <li>下载 PNG / SVG 卡片（1080 × 1350 适配朋友圈）</li>
+              <li>生成打工人朋友圈专属话题标签</li>
+            </ul>
+          </div>
+          <div style="padding:18px 24px;border-radius:20px;background:rgba(255,122,127,0.08);">
+            <h4 style="margin-bottom:12px;font-size:18px;">智能推荐文案库</h4>
+            <p style="margin:0;color:var(--muted);font-size:14px;line-height:1.7;">
+              每次生成会从“甲方热梗库”+“全站热门”中随机抽取，权重与怒气等级挂钩，保证贴地气又不重复。
+            </p>
+          </div>
+          <div style="display:flex;gap:12px;">
+            <button style="flex:1;padding:14px;border:none;border-radius:16px;background:linear-gradient(135deg,#ff7a7f,#ff4b54);color:#fff;font-weight:700;letter-spacing:0.14em;box-shadow:0 16px 30px rgba(255,122,127,0.32);">复制文案</button>
+            <button style="flex:1;padding:14px;border:none;border-radius:16px;background:linear-gradient(135deg,#6b4bff,#4137ff);color:#fff;font-weight:700;letter-spacing:0.14em;box-shadow:0 16px 30px rgba(107,75,255,0.32);">下载卡片</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</body>
+</html>
