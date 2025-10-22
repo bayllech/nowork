@@ -6,6 +6,7 @@ import mysqlPlugin from './plugins/mysql';
 import rateLimitPlugin from './plugins/rate-limit';
 import redisPlugin from './plugins/redis';
 import { registerRoutes } from './routes';
+import { createClickFlushJob } from './jobs/click-flush.job';
 
 export const buildServer = () => {
   const app = Fastify({
@@ -27,6 +28,16 @@ export const buildServer = () => {
   app.register(registerRoutes, { prefix: '/api' });
 
   app.get('/health', async () => ({ status: 'ok' }));
+
+  const clickFlushJob = createClickFlushJob(app);
+
+  app.addHook('onReady', async () => {
+    clickFlushJob.start();
+  });
+
+  app.addHook('onClose', async () => {
+    clickFlushJob.stop();
+  });
 
   return app;
 };

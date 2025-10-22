@@ -4,6 +4,7 @@ import { extractClientIp } from '../utils/ip';
 import { lookupRegion } from '../services/ip-location.service';
 import { upsertIpCache } from '../services/ip-cache.service';
 import { getRandomPhrase } from '../services/phrase.service';
+import { HOME_MAIN_BUTTON_ID, incrementButtonCounter } from '../services/click-counter.service';
 import {
   AGGREGATED_PAGE_KEY,
   determineAngerLevel,
@@ -71,6 +72,14 @@ export default async function hitRoutes(app: FastifyInstance) {
       const pageCounts = await getAggregatedCounts(pool, normalizedPage);
       const angerLevel = determineAngerLevel(pageCounts.daily);
       const phrase = await getRandomPhrase(pool, normalizedPage);
+
+      if (normalizedPage === env.defaultPage) {
+        try {
+          await incrementButtonCounter(app.redis, pool, HOME_MAIN_BUTTON_ID);
+        } catch (error) {
+          request.log.warn({ err: error }, 'home_main_click_counter_failed');
+        }
+      }
 
       const response = hitResponseSchema.parse({
         totalCount: allCounts.total,

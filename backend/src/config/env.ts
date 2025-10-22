@@ -7,6 +7,20 @@ const number = (value: string | undefined, fallback: number): number => {
   return Number.isFinite(parsed) ? parsed : fallback;
 };
 
+const boolean = (value: string | undefined, fallback: boolean): boolean => {
+  if (value === undefined) {
+    return fallback;
+  }
+  const normalized = value.trim().toLowerCase();
+  if (['1', 'true', 'yes', 'on'].includes(normalized)) {
+    return true;
+  }
+  if (['0', 'false', 'no', 'off'].includes(normalized)) {
+    return false;
+  }
+  return fallback;
+};
+
 export const env = {
   nodeEnv: process.env.NODE_ENV ?? 'development',
   port: number(process.env.PORT, 3000),
@@ -27,6 +41,10 @@ export const env = {
   rateLimit: {
     perMinute: number(process.env.RATE_LIMIT_PER_MINUTE, 60),
     burst: number(process.env.RATE_LIMIT_BURST, 10)
+  },
+  clickFlush: {
+    enabled: boolean(process.env.CLICK_FLUSH_ENABLED, true),
+    cron: process.env.CLICK_FLUSH_CRON ?? '*/1 * * * *'
   },
   ip2regionPath: process.env.IP2REGION_PATH ?? 'ip2region.db',
   defaultPage: process.env.DEFAULT_PAGE ?? 'default',

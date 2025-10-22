@@ -3,13 +3,7 @@ import path from 'node:path';
 import mysql from 'mysql2/promise';
 import Redis from 'ioredis';
 import { config } from 'dotenv';
-import {
-  HOME_MAIN_BUTTON_ID,
-  baseKey,
-  counterKey,
-  fetchPersistedTotal,
-  persistDelta
-} from '../src/services/click-counter.service';
+import { HOME_MAIN_BUTTON_ID, flushSupportedButtonCounters } from '../src/services/click-counter.service';
 
 const SUPPORTED_BUTTONS = [HOME_MAIN_BUTTON_ID];
 
@@ -32,29 +26,6 @@ const loadEnv = () => {
 const toNumber = (value: string | undefined, fallback: number) => {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
-};
-
-const readAndResetDelta = async (redis: Redis, key: string) => {
-  const client = redis as Redis & { getdel?: (k: string) => Promise<string | null> };
-  if (typeof client.getdel === 'function') {
-    const current = await client.getdel(key);
-    return Number(current ?? 0);
-  }
-
-  const script = `
-    local current = redis.call('GET', KEYS[1])
-    redis.call('SET', KEYS[1], '0')
-    return current
-  `;
-  const result = await redis.eval(script, 1, key);
-  return Number(result ?? 0);
-};
-
-const flushButton = async (redis: Redis, pool: mysql.Pool, buttonId: string) => {
-  const delta = await readAndResetDelta(redis, counterKey(buttonId));
-  const total = delta > 0 ? await persistDelta(pool, buttonId, delta) : await fetchPersistedTotal(pool, buttonId);
-  await redis.set(baseKey(buttonId), String(total));
-  return { buttonId, delta, total };
 };
 
 const main = async () => {
@@ -91,15 +62,12 @@ const main = async () => {
   });
 
   try {
-    const results = [];
-    for (const buttonId of SUPPORTED_BUTTONS) {
-      const summary = await flushButton(redis, pool, buttonId);
-      results.push(summary);
+    const results = await flushSupportedButtonCounters(redis, pool, SUPPORTED_BUTTONS);
+    for (const summary of results) {
       console.log(
-        `[flush-clicks] button=${buttonId} delta=${summary.delta} total=${summary.total}`
+        `[flush-clicks] button=${summary.buttonId} delta=${summary.delta} total=${summary.total}`
       );
     }
-
     return results;
   } finally {
     await redis.quit();
