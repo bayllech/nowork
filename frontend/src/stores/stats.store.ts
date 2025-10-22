@@ -40,6 +40,7 @@ export interface StatsState {
   loading: boolean;
   hitLoading: boolean;
   summaryLoading: boolean;
+  hitInFlight: number;
   error: string | null;
   summaryError: string | null;
 }
@@ -63,6 +64,7 @@ export const useStatsStore = defineStore('stats', {
     summaryTimestamp: null,
     loading: false,
     hitLoading: false,
+    hitInFlight: 0,
     summaryLoading: false,
     error: null,
     summaryError: null
@@ -97,10 +99,8 @@ export const useStatsStore = defineStore('stats', {
       }
     },
     async recordHit(payload: HitRequest) {
-      if (this.hitLoading) {
-        return;
-      }
-      this.hitLoading = true;
+      this.hitInFlight += 1;
+      this.hitLoading = this.hitInFlight > 0;
       this.error = null;
       this.summaryError = null;
       try {
@@ -111,7 +111,8 @@ export const useStatsStore = defineStore('stats', {
         this.error = error instanceof Error ? error.message : '怒气按钮调用失败';
         throw error;
       } finally {
-        this.hitLoading = false;
+        this.hitInFlight = Math.max(0, this.hitInFlight - 1);
+        this.hitLoading = this.hitInFlight > 0;
       }
     },
     async fetchChinaRanking(period: RankingPeriod) {

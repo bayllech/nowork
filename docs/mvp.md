@@ -215,3 +215,21 @@
   - 文案种子数据：`backend/sql/seed_phrases.sql`
 
 > MVP 发布后请根据实际埋点数据与用户反馈，定期回溯本文件并更新范围与指标，确保产品迭代与业务目标同步。
+
+## 15. 本地运行与验证流程
+
+1. **准备环境变量与依赖**
+   - 在仓库根目录执行 `cp .env.dev backend/.env`，如需自定义密码请同步修改 Docker Compose。
+   - 安装依赖：`pnpm install`、`pnpm --dir backend install`、`pnpm --dir frontend install`。
+2. **数据库初始化**
+   - 运行 `pnpm --dir backend db:init`，脚本将创建表结构、导入吐槽文案，并灌入示例省市/国家怒气数据（含今日与累计）。
+3. **一键验证脚本（推荐）**
+   - `pnpm test:all` 会按顺序完成：安装依赖 → 启动 Docker（MySQL/Redis/Backend）→ 等待健康检查 → 执行后端 `test:api` → 前端 `test:unit` → `pnpm build`。
+   - 脚本结束后容器仍保持运行，可直接打开前后端进行手动联调，完成后执行 `docker compose -f docker/docker-compose.dev.yml down` 停止服务。
+4. **手动运行（可选方案）**
+   - 启动服务：`docker compose -f docker/docker-compose.dev.yml up -d mysql redis`，再在 `backend/` 与 `frontend/` 分别执行 `pnpm dev`。
+   - 打开 `http://localhost:5173` 体验怒气按钮、榜单与吐槽卡；后端默认监听 `http://localhost:3000`。
+5. **回归测试**
+   - 后端接口：`pnpm --dir backend test:api`
+   - 前端组件：`pnpm --dir frontend test:unit`
+   - 端到端校验：复用 `pnpm test:all`

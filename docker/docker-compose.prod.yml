@@ -8,10 +8,13 @@ services:
       - ../.env.prod
     environment:
       - NODE_ENV=production
+      - MYSQL_HOST=mysql
+      - REDIS_HOST=redis
     volumes:
       - ../data/ip2region.xdb:/app/ip2region.xdb:ro
     depends_on:
       - mysql
+      - redis
     networks:
       - appnet
 
@@ -28,6 +31,20 @@ services:
       - ../data/mysql:/var/lib/mysql
     networks:
       - appnet
+
+  redis:
+    image: redis:7.2-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - ../data/redis:/data
+    networks:
+      - appnet
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   nginx:
     image: nginx:alpine

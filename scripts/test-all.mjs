@@ -93,7 +93,10 @@ async function main() {
   console.log('\n5. 运行后端 API 测试...');
   await runPnpm(['--dir', 'backend', 'test:api']);
 
-  console.log('\n6. 执行前端构建验证...');
+  console.log('\n6. 执行前端单元测试...');
+  await runPnpm(['--dir', 'frontend', 'test:unit']);
+
+  console.log('\n7. 执行前端构建验证...');
   await runPnpm(['--dir', 'frontend', 'build']);
 
   console.log('\n✅ 一键验证完成：Docker 服务仍在运行，可继续手动联调。');

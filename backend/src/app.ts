@@ -1,5 +1,6 @@
 import Fastify from 'fastify';
 import sensible from '@fastify/sensible';
+import cors from '@fastify/cors';
 import { env } from './config/env';
 import mysqlPlugin from './plugins/mysql';
 import rateLimitPlugin from './plugins/rate-limit';
@@ -14,6 +15,11 @@ export const buildServer = () => {
   });
 
   app.register(sensible);
+  app.register(cors, {
+    origin: ['http://localhost:5173'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+  });
   app.register(mysqlPlugin);
   app.register(rateLimitPlugin);
   app.register(registerRoutes, { prefix: '/api' });

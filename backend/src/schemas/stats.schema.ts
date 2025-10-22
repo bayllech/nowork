@@ -18,3 +18,16 @@ export const statsQuerySchema = z
   .passthrough();
 
 export type StatsQuery = z.infer<typeof statsQuerySchema>;
+
+export const statsSummaryQuerySchema = z
+  .object({
+    page: z
+      .string()
+      .trim()
+      .max(32)
+      .regex(/^[a-zA-Z0-9_-]+$/, { message: 'page \u4ec5\u652f\u6301\u5b57\u6bcd\u6570\u5b57\u548c\u4e0b\u5212\u7ebf' })
+      .optional()
+  })
+  .passthrough();
+
+export type StatsSummaryQuery = z.infer<typeof statsSummaryQuerySchema>;

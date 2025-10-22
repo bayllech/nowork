@@ -4,20 +4,17 @@ import { extractClientIp } from '../utils/ip';
 import { lookupRegion } from '../services/ip-location.service';
 import { upsertIpCache } from '../services/ip-cache.service';
 import { getRandomPhrase } from '../services/phrase.service';
-import { getAggregatedCounts, incrementRegionStat } from '../services/stat.service';
+import {
+  AGGREGATED_PAGE_KEY,
+  determineAngerLevel,
+  getAggregatedCounts,
+  incrementRegionStat
+} from '../services/stat.service';
 import { hitRequestSchema, hitResponseSchema } from '../schemas/hit.schema';
 
 const UNKNOWN = '\u672a\u77e5';
 const OVERSEA_PLACEHOLDER = 'N/A';
-const AGGREGATED_PAGE_KEY = 'all';
 const CHINA = '\u4e2d\u56fd';
-
-const determineAngerLevel = (dailyCount: number) => {
-  if (dailyCount >= 500) return 3;
-  if (dailyCount >= 200) return 2;
-  if (dailyCount >= 50) return 1;
-  return 0;
-};
 
 export default async function hitRoutes(app: FastifyInstance) {
   app.post(

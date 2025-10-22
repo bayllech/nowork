@@ -1,8 +1,14 @@
 import type { FastifyInstance } from 'fastify';
 import dayjs from 'dayjs';
 import { env } from '../config/env';
-import { statsQuerySchema } from '../schemas/stats.schema';
-import { fetchChinaStats, fetchGlobalStats } from '../services/stat.service';
+import { statsQuerySchema, statsSummaryQuerySchema } from '../schemas/stats.schema';
+import {
+  AGGREGATED_PAGE_KEY,
+  determineAngerLevel,
+  fetchChinaStats,
+  fetchGlobalStats,
+  getAggregatedCounts
+} from '../services/stat.service';
 
 const normalizeDate = (date?: string) => {
   if (date && dayjs(date, 'YYYY-MM-DD', true).isValid()) {
@@ -12,6 +18,34 @@ const normalizeDate = (date?: string) => {
 };
 
 export default async function statsRoutes(app: FastifyInstance) {
+  app.get('/summary', async (request, reply) => {
+    const parseResult = statsSummaryQuerySchema.safeParse(request.query ?? {});
+    if (!parseResult.success) {
+      const message = parseResult.error.errors.map((err) => err.message).join('; ');
+      return reply.badRequest(message);
+    }
+
+    const { page } = parseResult.data;
+    const targetPage = page ?? env.defaultPage;
+    const aggregatedCounts = await getAggregatedCounts(app.mysql, AGGREGATED_PAGE_KEY);
+    const pageCounts = await getAggregatedCounts(app.mysql, targetPage);
+
+    return reply.send({
+      page: targetPage,
+      aggregated: {
+        total: aggregatedCounts.total,
+        daily: aggregatedCounts.daily,
+        angerLevel: determineAngerLevel(aggregatedCounts.daily)
+      },
+      pageStats: {
+        total: pageCounts.total,
+        daily: pageCounts.daily,
+        angerLevel: determineAngerLevel(pageCounts.daily)
+      },
+      generatedAt: dayjs().toISOString()
+    });
+  });
+
   app.get('/china', async (request, reply) => {
     const parseResult = statsQuerySchema.safeParse(request.query ?? {});
     if (!parseResult.success) {

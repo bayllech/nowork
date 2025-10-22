@@ -15,9 +15,18 @@ export interface StatsFilter {
   period: 'daily' | 'total';
 }
 
+export const AGGREGATED_PAGE_KEY = 'all';
+
 const CHINA = '\u4e2d\u56fd';
 const UNKNOWN = '\u672a\u77e5';
 const OTHER = '\u5176\u4ed6';
+
+export const determineAngerLevel = (dailyCount: number) => {
+  if (dailyCount >= 500) return 3;
+  if (dailyCount >= 200) return 2;
+  if (dailyCount >= 50) return 1;
+  return 0;
+};
 
 export const incrementRegionStat = async (
   pool: MySQLPromisePool,

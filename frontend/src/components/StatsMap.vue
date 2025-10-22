@@ -1,6 +1,12 @@
 <template>
   <div class="h-80 w-full">
-    <VChart v-if="isReady" :option="option" autoresize class="h-full w-full" />
+    <VChart v-if="isReady && hasData" :option="option" autoresize class="h-full w-full" />
+    <div
+      v-else-if="isReady"
+      class="flex h-full items-center justify-center rounded-2xl border border-dashed border-primary-subtle text-xs text-muted"
+    >
+      暂无怒气数据，等待最新敲击同步...
+    </div>
     <div
       v-else
       class="flex h-full items-center justify-center rounded-2xl border border-dashed border-primary-subtle text-xs text-muted"
@@ -67,6 +73,8 @@ const maxValue = computed(() => {
   if (max <= 100) return 100;
   return Math.ceil(max / 50) * 50;
 });
+
+const hasData = computed(() => props.data.some((item) => Number(item.value ?? 0) > 0));
 
 const option = computed(() => ({
   backgroundColor: 'transparent',

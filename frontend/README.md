@@ -1,40 +1,47 @@
-# nowork.click · 前端 MVP
+# nowork.click · 前端 MVP 套件
 
-这里是 nowork.click 的 Vue 3 + TypeScript + Vite 基线工程，已经完成 Tailwind CSS 主题与设计稿的对齐，后续可以在此基础上实现怒气按钮、榜单和吐槽卡等模块。
+该目录提供 nowork.click MVP 的前端实现，基于 **Vue 3 + Vite + TypeScript + Tailwind CSS**，已经对齐原型中首页、国内榜、海外榜、角色入口与吐槽卡等页面布局。配合后端 Fastify 服务即可体验完整怒气按钮 → 榜单展示 → 吐槽分享的闭环。
 
 ## 快速开始
 
 ```bash
 cd frontend
-pnpm install            # 已初始化依赖，可按需同步更新
-pnpm dev                # 本地开发，默认端口 5173
-pnpm build              # 产出静态资源，输出到 dist/ 目录
+pnpm install            # 安装依赖
+pnpm dev                # 本地开发，默认端口 http://localhost:5173
+pnpm build              # 构建产物到 dist/
 pnpm preview            # 预览构建结果
+pnpm test:unit          # 运行 Vitest 组件测试
 ```
 
-## 技术栈
+默认会将请求发送至同源 `/api/*`，若后端部署在其他地址，可通过 `.env` 配置 `VITE_API_BASE_URL`。
 
-- Vue 3 + `<script setup>`，配合 TypeScript 严格模式；
-- Vite 5（Node.js ≥ 18.0），内置 `@` 到 `src/` 的路径别名；
-- Tailwind CSS 3.4 + `@tailwindcss/forms` 插件，颜色、字体、阴影等主题与 `prototype/tailwind/` 保持一致。
+## 核心模块一览
 
-## 目录结构
+| 模块 | 说明 | 关键文件 |
+| --- | --- | --- |
+| 导航与路由 | 玻璃拟态导航条、Mobile 折叠 + Vue Router 路由 | `src/components/NavigationBar.vue`、`src/router/index.ts` |
+| 怒气按钮 | 包含冷却节流、音效播放、Pinia 状态更新 | `src/components/AngerButton.vue`、`src/stores/stats.store.ts` |
+| 榜单可视化 | ECharts 地图 + Top10 柱图，支持国内/海外切换 | `src/components/StatsMap.vue`、`src/components/RankingBarChart.vue` |
+| 页面视图 | 首页、国内榜、海外榜、角色入口、吐槽卡 | `src/views/*.vue` |
+| 共享资源 | Tailwind 主题、地图 GeoJSON、API 封装 | `src/assets/main.css`、`src/assets/geo/china.json`、`src/services/api.ts` |
 
-```
-frontend/
-├── index.html          # 入口模板，已配置中文语言环境
-├── src/
-│   ├── App.vue         # MVP 布局占位，可快速替换为各业务模块
-│   ├── main.ts         # Vue 入口，载入 Tailwind 样式
-│   └── assets/
-│       └── main.css    # Tailwind 指令与基础全局样式
-├── tailwind.config.js  # 主题扩展，与设计稿共享的色彩/字体设定
-└── vite.config.ts      # Vite 配置，含别名与插件声明
-```
+## 与后端的协同
 
-## 下一步建议
+1. 在项目根目录运行 `pnpm --dir backend db:init`，会创建数据表并灌入示例榜单/文案；
+2. 后端服务监听 `http://localhost:3000`，当前前端默认请求 `/api/*` 接口；
+3. 若使用 Docker，推荐执行根目录的 `pnpm test:all`，自动启动 MySQL/Redis/Backend 并完成 API + 前端构建校验。
 
-1. 在 `src/components` 中拆分导航、怒气按钮、榜单等核心组件，并接入后端接口；
-2. 建立路由与状态管理（推荐 Pinia）以支持多页面体验；
-3. 引入单元测试或组件测试（如 Vitest + Testing Library），保障迭代质量；
-4. 结合 CI/CD 流程，将 `pnpm build` 接入部署流水线。
+## 组件测试
+
+- 基于 **Vitest + @testing-library/vue**，增加了关键交互用例：
+  - 怒气按钮节流与数据更新（`src/components/__tests__/AngerButton.spec.ts`）；
+  - 地图组件在无数据时的兜底提示（`src/components/__tests__/StatsMap.spec.ts`）。
+- 可通过 `pnpm test:unit --watch` 进入监听模式以辅助开发。
+
+## 设计与主题
+
+- Tailwind 配置位于 `frontend/tailwind.config.js`，颜色、字体、阴影与原型保持一致；
+- 中国地图数据在 `src/assets/geo/china.json`，世界地图利用 `world-atlas` 与 `topojson-client` 动态转换；
+- 全局样式入口 `src/assets/main.css`，已包含字体、背景渐变等基础设定。
+
+如需按需扩展页面，可在现有目录结构基础上新增视图与组件，并通过 Pinia Store 统一管理状态。

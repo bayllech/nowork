@@ -173,7 +173,7 @@ const copyImage = () => {
 
 onMounted(() => {
   phrases.fetchPhrases('share');
-  stats.fetchSummary('share');
+  stats.fetchSummary('default');
 });
 
 watch(
