@@ -21,10 +21,7 @@ export default async function hitRoutes(app: FastifyInstance) {
     '/',
     {
       config: {
-        rateLimit: {
-          max: env.rateLimit.burst,
-          timeWindow: '1 second'
-        }
+        rateLimit: false
       }
     },
     async (request, reply) => {
