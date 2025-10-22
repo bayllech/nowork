@@ -77,4 +77,33 @@ describe('AngerButton', () => {
     expect(statsStore.hitInFlight).toBe(0);
     expect(statsStore.hitLoading).toBe(false);
   });
+
+  it('键盘长按仅触发一次敲击', async () => {
+    render(AngerButton, {
+      global: {
+        plugins: [pinia]
+      }
+    });
+
+    await fireEvent.keyDown(window, { key: ' ', code: 'Space' });
+    await flushAsync();
+    await nextTick();
+
+    expect(apiMock.postHit).toHaveBeenCalledTimes(1);
+
+    await fireEvent.keyDown(window, { key: ' ', code: 'Space', repeat: true });
+    await flushAsync();
+    await nextTick();
+
+    expect(apiMock.postHit).toHaveBeenCalledTimes(1);
+
+    await fireEvent.keyUp(window, { key: ' ', code: 'Space' });
+    await fireEvent.keyDown(window, { key: ' ', code: 'Space' });
+    await fireEvent.keyUp(window, { key: ' ', code: 'Space' });
+
+    await flushAsync();
+    await nextTick();
+
+    expect(apiMock.postHit).toHaveBeenCalledTimes(2);
+  });
 });

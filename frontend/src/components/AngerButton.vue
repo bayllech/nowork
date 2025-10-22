@@ -137,6 +137,9 @@ const handleGlobalKeyDown = (event: KeyboardEvent) => {
     return;
   }
   event.preventDefault();
+  if (event.repeat || isPressing.value) {
+    return;
+  }
   void handlePressStart();
 };
 
