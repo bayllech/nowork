@@ -17,6 +17,13 @@ export const env = {
     user: process.env.MYSQL_USER ?? 'nowork',
     password: process.env.MYSQL_PASSWORD ?? ''
   },
+  redis: {
+    host: process.env.REDIS_HOST ?? '127.0.0.1',
+    port: number(process.env.REDIS_PORT, 6379),
+    password: process.env.REDIS_PASSWORD ?? '',
+    db: number(process.env.REDIS_DB, 0),
+    keyPrefix: process.env.REDIS_KEY_PREFIX ?? 'nowork:'
+  },
   rateLimit: {
     perMinute: number(process.env.RATE_LIMIT_PER_MINUTE, 60),
     burst: number(process.env.RATE_LIMIT_BURST, 10)

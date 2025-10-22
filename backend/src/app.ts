@@ -4,6 +4,7 @@ import cors from '@fastify/cors';
 import { env } from './config/env';
 import mysqlPlugin from './plugins/mysql';
 import rateLimitPlugin from './plugins/rate-limit';
+import redisPlugin from './plugins/redis';
 import { registerRoutes } from './routes';
 
 export const buildServer = () => {
@@ -21,6 +22,7 @@ export const buildServer = () => {
     allowedHeaders: ['Content-Type', 'Authorization']
   });
   app.register(mysqlPlugin);
+  app.register(redisPlugin);
   app.register(rateLimitPlugin);
   app.register(registerRoutes, { prefix: '/api' });
 
