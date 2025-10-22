@@ -17,10 +17,6 @@
       @pointerup="handlePressEnd"
       @pointerleave="handlePressEnd"
       @pointercancel="handlePressEnd"
-      @keydown.space.prevent="handlePressStart"
-      @keyup.space.prevent="handlePressEnd"
-      @keydown.enter.prevent="handlePressStart"
-      @keyup.enter.prevent="handlePressEnd"
     >
       <span class="text-xs font-semibold uppercase tracking-[0.8em] text-white/80">Press &amp; Hold</span>
       <span class="mt-3 font-display text-[50px] font-black tracking-[0.16em] drop-shadow-[0_18px_38px_rgba(0,0,0,0.3)]">
@@ -33,7 +29,7 @@
         {{ levelStyles.label }}
       </span>
     </button>
-    <audio ref="smashAudio" class="hidden" preload="auto" src="https://cdn.pixabay.com/download/audio/2023/02/02/audio_c607de6484.mp3?filename=punch-boxing-158522.mp3"></audio>
+    <audio ref="smashAudio" class="hidden" preload="auto" src="/audio/hit.mp3"></audio>
     <p v-if="errorMessage" class="absolute -bottom-12 left-1/2 w-full -translate-x-1/2 text-center text-xs text-red-500">
       {{ errorMessage }}
     </p>
@@ -41,7 +37,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, onMounted, onBeforeUnmount } from 'vue';
 import { useStatsStore } from '../stores';
 
 const props = withDefaults(
@@ -60,13 +56,13 @@ const emit = defineEmits<{
 }>();
 
 const stats = useStatsStore();
-const isCoolingDown = ref(false);
 const isPressing = ref(false);
 const errorMessage = ref<string | null>(null);
 const smashAudio = ref<HTMLAudioElement | null>(null);
-const COOLDOWN_MS = 700;
 
-const disabled = computed(() => stats.hitLoading || isCoolingDown.value);
+const disabled = computed(() => false);
+const KEY_CODES = new Set(['Space', 'Enter']);
+const KEY_VALUES = new Set([' ', 'Spacebar', 'Enter']);
 
 const levelStyles = computed(() => {
   const level = stats.angerLevel ?? 0;
@@ -121,10 +117,6 @@ const handlePressStart = async () => {
     return;
   }
   isPressing.value = true;
-  isCoolingDown.value = true;
-  setTimeout(() => {
-    isCoolingDown.value = false;
-  }, COOLDOWN_MS);
 
   try {
     await stats.recordHit({ page: props.page, role: props.roleKey });
@@ -139,6 +131,32 @@ const handlePressStart = async () => {
 const handlePressEnd = () => {
   isPressing.value = false;
 };
+
+const handleGlobalKeyDown = (event: KeyboardEvent) => {
+  if (!KEY_CODES.has(event.code) && !KEY_VALUES.has(event.key)) {
+    return;
+  }
+  event.preventDefault();
+  void handlePressStart();
+};
+
+const handleGlobalKeyUp = (event: KeyboardEvent) => {
+  if (!KEY_CODES.has(event.code) && !KEY_VALUES.has(event.key)) {
+    return;
+  }
+  event.preventDefault();
+  handlePressEnd();
+};
+
+onMounted(() => {
+  window.addEventListener('keydown', handleGlobalKeyDown);
+  window.addEventListener('keyup', handleGlobalKeyUp);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', handleGlobalKeyDown);
+  window.removeEventListener('keyup', handleGlobalKeyUp);
+});
 </script>
 
 <style scoped>
