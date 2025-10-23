@@ -21,6 +21,7 @@ const props = withDefaults(
 );
 
 const sortedItems = computed<Array<{ name: string; value: number }>>(() => {
+  // 确保从高到低排序
   return props.items
     .slice()
     .sort((a, b) => b.value - a.value)
@@ -36,15 +37,17 @@ const option = computed(() => ({
         text: props.title,
         textStyle: {
           color: '#1f2937',
-          fontSize: 14
+          fontSize: 14,
+          fontWeight: 600
         }
       }
     : undefined,
   grid: {
-    left: 80,
-    right: 20,
-    top: props.title ? 50 : 20,
-    bottom: 20
+    left: 10,
+    right: 80,
+    top: props.title ? 50 : 10,
+    bottom: 10,
+    containLabel: true
   },
   tooltip: {
     trigger: 'axis',
@@ -62,16 +65,40 @@ const option = computed(() => ({
   xAxis: {
     type: 'value',
     boundaryGap: [0, 0.1],
-    axisLine: { lineStyle: { color: '#cbd5f5' } },
-    axisLabel: { color: '#6b7280' }
+    // 去除竖线显示
+    splitLine: {
+      show: false
+    },
+    axisLine: {
+      show: false
+    },
+    axisTick: {
+      show: false
+    },
+    axisLabel: {
+      show: false
+    }
   },
   yAxis: {
     type: 'category',
     data: categories.value,
-    axisLine: { lineStyle: { color: '#ede9fe' } },
+    inverse: true, // 确保从上到下显示，第一个在顶部
+    axisLine: {
+      show: false
+    },
+    axisTick: {
+      show: false
+    },
     axisLabel: {
-      color: '#4b5563',
-      formatter: (value: string) => value
+      color: '#374151',
+      fontSize: 13,
+      fontWeight: 500,
+      margin: 16,
+      align: 'right',
+      formatter: (value: string) => {
+        // 限制名称长度，避免过长
+        return value.length > 8 ? value.substring(0, 7) + '...' : value;
+      }
     }
   },
   series: [
@@ -80,12 +107,26 @@ const option = computed(() => ({
       data: seriesData.value,
       itemStyle: {
         color: props.color,
-        borderRadius: [0, 8, 8, 0]
+        borderRadius: [0, 6, 6, 0]
       },
       label: {
         show: true,
         position: 'right',
-        formatter: '{c}'
+        // 优化数字显示样式
+        formatter: (params: { value: number }) => {
+          return params.value.toLocaleString();
+        },
+        color: '#1f2937',
+        fontSize: 13,
+        fontWeight: 600,
+        margin: 8
+      },
+      // 添加渐变效果
+      emphasis: {
+        itemStyle: {
+          shadowBlur: 10,
+          shadowColor: 'rgba(0, 0, 0, 0.1)'
+        }
       }
     }
   ]

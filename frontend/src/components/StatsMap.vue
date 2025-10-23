@@ -37,13 +37,8 @@ const ensureMapRegistered = async (type: 'china' | 'world') => {
     const geoJson = ((module as { default?: unknown }).default ?? module) as unknown;
     registerMap('china', geoJson as any);
   } else {
-    const [atlasModule, topojsonModule] = await Promise.all([
-      import('world-atlas/countries-110m.json'),
-      import('topojson-client')
-    ]);
-    const worldData = ((atlasModule as { default?: unknown }).default ?? atlasModule) as any;
-    const topojson = topojsonModule as typeof import('topojson-client');
-    const geoJson = topojson.feature(worldData, worldData.objects.countries);
+    const module = await import('@/assets/geo/world.json');
+    const geoJson = ((module as { default?: unknown }).default ?? module) as unknown;
     registerMap('world', geoJson as any);
   }
 };
@@ -103,9 +98,13 @@ const option = computed(() => ({
       type: 'map' as const,
       map: props.mapType === 'china' ? 'china' : 'world',
       roam: 'scale',
+      // 修复俄罗斯地图显示问题 - 调整地图中心和缩放
+      center: props.mapType === 'world' ? [0, 20] : undefined,
+      zoom: props.mapType === 'world' ? 1.2 : 1,
       emphasis: {
         label: {
-          color: '#fff'
+          color: '#fff',
+          fontSize: 12
         },
         itemStyle: {
           areaColor: '#6d28d9'
@@ -116,6 +115,8 @@ const option = computed(() => ({
         borderColor: '#c4b5fd',
         borderWidth: 0.6
       },
+      // 修复俄罗斯横条问题 - 调整数据渲染
+      universalTransition: true,
       data: props.data
     }
   ]

@@ -1,7 +1,8 @@
 <template>
   <div class="mx-auto flex min-h-screen max-w-6xl flex-col gap-10 px-6 pb-24 pt-12">
     <NavigationBar context-label="全球打工人怒气榜" />
-    <main class="grid gap-8 md:grid-cols-[1.1fr_0.9fr] md:items-start">
+    <main class="grid gap-8 lg:grid-cols-[1fr_380px]">
+      <!-- 左侧内容 -->
       <section class="space-y-6 rounded-3xl bg-white/90 p-8 shadow-card backdrop-blur">
         <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
@@ -37,55 +38,41 @@
           <div class="rounded-3xl border border-white/60 bg-white/70 p-4 shadow-inner">
             <StatsMap :map-type="'world'" :data="worldMapData" unit="次" />
           </div>
-          <div class="rounded-3xl border border-white/60 bg-white/60 p-4 shadow-inner">
-            <RankingBarChart :items="globalBarData" title="国家热度 Top 10" color="#06b6d4" unit="次" />
-          </div>
           <p class="text-xs text-muted">地图为设计占位，可替换 Canvas / SVG 实现，颜色越鲜代表怒气越高。</p>
         </div>
       </section>
 
-      <aside class="space-y-6 rounded-3xl bg-white/90 p-8 shadow-card backdrop-blur">
-        <header class="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <h2 class="font-display text-2xl font-bold text-ink">国家怒气排行榜</h2>
-            <p class="text-sm text-muted">实时汇总海外用户的怒气指数，并根据最近点击热度排序。</p>
+      <!-- 右侧内容 -->
+      <aside class="space-y-6">
+        <!-- 国家热度 Top 10 -->
+        <section class="rounded-3xl bg-white/90 p-6 shadow-card backdrop-blur">
+          <div class="mb-4 flex items-center justify-between">
+            <h3 class="font-display text-xl font-bold text-ink flex items-center gap-2">
+              <i class="fa-solid fa-trophy text-yellow-500"></i>
+              国家热度 Top 10
+            </h3>
+            <span class="rounded-full bg-accent/10 px-3 py-1 text-xs font-semibold text-accent">
+              实时更新
+            </span>
           </div>
-          <div class="flex gap-2 text-xs font-semibold text-muted">
-            <span class="rounded-full bg-primary-light px-3 py-1" :class="{ 'bg-primary-strong text-white': stats.globalPeriod === 'daily' }"
-              >今日榜</span
-            >
-            <span class="rounded-full bg-white px-3 py-1" :class="{ 'bg-primary-strong text-white': stats.globalPeriod === 'total' }"
-              >总榜</span
-            >
+          <div class="rounded-2xl border border-white/60 bg-white/60 p-4 shadow-inner">
+            <RankingBarChart :items="globalBarData" title="" color="#06b6d4" unit="次" />
           </div>
-        </header>
-        <div class="grid gap-4">
-          <article
-            v-for="country in countryHighlights"
-            :key="country.country"
-            class="grid gap-3 rounded-3xl bg-white/90 px-6 py-5 shadow-soft ring-1 ring-white/60 transition hover:-translate-y-1"
-          >
-            <div class="flex items-center justify-between">
-              <div class="text-lg font-bold text-ink">
-                <span class="mr-2 rounded-full bg-primary-light px-3 py-1 text-sm font-semibold text-primary-strong">
-                  #{{ country.rank }}
-                </span>
-                {{ country.country }}
-              </div>
-              <div class="text-sm font-semibold text-muted uppercase tracking-[0.2em]">怒气指数</div>
-            </div>
-            <p class="text-sm text-muted"><i class="fa-solid fa-quote-left mr-2 text-primary"></i>{{ country.highlight }}</p>
-            <div class="flex items-center justify-between text-sm">
-              <span class="font-semibold text-primary-strong"><i class="fa-solid fa-bolt mr-2 text-accent"></i>{{ country.count.toLocaleString() }} 次</span>
-              <span class="rounded-full bg-primary-light px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-primary-strong">
-                {{ stats.globalPeriod === 'daily' ? '今日榜' : '总榜' }}
-              </span>
-            </div>
-          </article>
-          <p v-if="!countryHighlights.length" class="rounded-3xl border border-dashed border-primary-light/70 px-6 py-8 text-center text-sm text-muted">
-            暂无海外数据，请稍后刷新或检查后端服务。
-          </p>
-        </div>
+        </section>
+
+        <!-- 数据说明 -->
+        <section class="rounded-2xl bg-white/70 p-4 text-xs leading-relaxed text-muted">
+          <h4 class="mb-2 text-sm font-semibold text-ink flex items-center gap-2">
+            <i class="fa-solid fa-chart-line text-primary"></i>
+            数据说明
+          </h4>
+          <ul class="space-y-1">
+            <li>• 基于匿名IP定位至国家级区域</li>
+            <li>• 怒气值根据用户点击频率计算</li>
+            <li>• 每日凌晨重置今日数据</li>
+            <li>• {{ stats.globalPeriod === 'daily' ? '展示今日实时数据' : '展示累计历史数据' }}</li>
+          </ul>
+        </section>
       </aside>
     </main>
   </div>

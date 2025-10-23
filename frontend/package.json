@@ -13,11 +13,9 @@
     "@fortawesome/fontawesome-free": "^7.1.0",
     "echarts": "5.5.0",
     "pinia": "^2.2.6",
-    "topojson-client": "3.1.0",
     "vue": "^3.5.22",
     "vue-echarts": "6.7.3",
-    "vue-router": "^4.4.5",
-    "world-atlas": "2.0.2"
+    "vue-router": "^4.4.5"
   },
   "devDependencies": {
     "@pinia/testing": "^0.1.4",
@@ -26,7 +24,6 @@
     "@testing-library/user-event": "^14.5.1",
     "@testing-library/vue": "^8.1.0",
     "@types/node": "^24.6.0",
-    "@types/topojson-client": "^3.1.5",
     "@vitejs/plugin-vue": "^5.1.4",
     "@vue/test-utils": "^2.4.5",
     "@vue/tsconfig": "^0.8.1",
