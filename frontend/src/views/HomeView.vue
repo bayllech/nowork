@@ -98,7 +98,7 @@
                   <span
                     class="inline-flex items-center gap-1 rounded-full bg-primary-light/60 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-primary-strong"
                   >
-                    <i class="fa-solid fa-face-angry text-primary-strong"></i> 怒气 Lv.{{ stats.angerLevel ?? 0 }}
+                    <i class="fa-solid fa-face-angry text-primary-strong"></i> 怒气值 {{ stats.angerLevel ?? 0 }}/100
                   </span>
                 </div>
                 <div class="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-[0.28em] text-ink/70">

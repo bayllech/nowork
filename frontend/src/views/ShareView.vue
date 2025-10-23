@@ -11,11 +11,11 @@
             </p>
           </div>
           <div class="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-white shadow-soft">
-            <i class="fa-solid fa-face-angry"></i> 怒气 Lv.{{ angerLevel }}
+            <i class="fa-solid fa-face-angry"></i> 怒气释放中
           </div>
         </header>
 
-        <article class="grid gap-6 rounded-[32px] border border-primary/25 bg-white px-10 py-12 text-ink shadow-[0_28px_48px_rgba(65,55,255,0.22)]">
+        <article ref="shareCardRef" class="grid gap-6 rounded-[32px] border border-primary/25 bg-white px-10 py-12 text-ink shadow-[0_28px_48px_rgba(65,55,255,0.22)]">
           <header class="grid gap-3">
             <div class="flex items-center justify-between">
               <span class="text-xs font-semibold uppercase tracking-[0.32em] text-primary-strong/70">nowork.click</span>
@@ -23,7 +23,7 @@
                 class="inline-flex items-center gap-2 rounded-full bg-primary-light/60 px-4 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-primary-strong"
               >
                 <i class="fa-solid fa-face-angry text-primary-strong"></i>
-                怒气 Lv.{{ angerLevel }}
+                怒气高涨
               </span>
             </div>
             <div class="flex flex-wrap items-center justify-between gap-3 text-xs font-semibold uppercase tracking-[0.3em] text-ink/70">
@@ -62,10 +62,11 @@
           <button
             class="flex items-center justify-center gap-3 rounded-3xl bg-primary-strong px-5 py-4 text-sm font-semibold text-white shadow-soft transition hover:-translate-y-0.5 disabled:opacity-50"
             type="button"
-            disabled
-            @click="copyImage"
+            :disabled="!selectedPhrase || isDownloading"
+            :aria-busy="isDownloading"
+            @click="downloadImage"
           >
-            <i class="fa-solid fa-cloud-arrow-down"></i> 下载 PNG（筹备中）
+            <i class="fa-solid fa-cloud-arrow-down"></i> {{ isDownloading ? '正在导出中...' : '下载 PNG' }}
           </button>
           <RouterLink
             class="flex items-center justify-center gap-3 rounded-3xl bg-white px-5 py-4 text-sm font-semibold text-muted shadow-inner transition hover:bg-primary-light/40"
@@ -144,9 +145,10 @@ const phrases = usePhrasesStore();
 const stats = useStatsStore();
 const selectedPhrase = ref<string | null>(null);
 const copyFeedback = ref<string>('');
+const shareCardRef = ref<HTMLElement | null>(null);
+const isDownloading = ref(false);
 
 const sharePhrases = computed(() => phrases.getPhrasesByPage('share'));
-const angerLevel = computed(() => stats.angerLevel ?? 1);
 const dailyCountLabel = computed(() => stats.dailyCount.toLocaleString());
 const generatedAt = computed(() =>
   stats.summaryTimestamp ? new Date(stats.summaryTimestamp).toLocaleTimeString() : new Date().toLocaleTimeString()
@@ -167,8 +169,42 @@ const copyText = async () => {
   }
 };
 
-const copyImage = () => {
-  copyFeedback.value = '图片导出功能建设中，请先使用复制文案。';
+const downloadImage = async () => {
+  if (!selectedPhrase.value || isDownloading.value) return;
+  const target = shareCardRef.value;
+  if (!target) {
+    copyFeedback.value = '未找到吐槽卡内容，请刷新页面后重试。';
+    return;
+  }
+  isDownloading.value = true;
+  copyFeedback.value = 'PNG 正在生成，请稍候...';
+  try {
+    const { default: html2canvas } = await import('html2canvas');
+    // 使用 html2canvas 将吐槽卡转换为 PNG 图像
+    const canvas = await html2canvas(target, {
+      backgroundColor: '#ffffff',
+      scale: Math.min(window.devicePixelRatio || 1, 2),
+      useCORS: true
+    });
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png', 1));
+    if (!blob) {
+      throw new Error('PNG blob 创建失败');
+    }
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `nowork-share-${Date.now()}.png`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+    URL.revokeObjectURL(url);
+    copyFeedback.value = 'PNG 导出完成，快去分享吧！';
+  } catch (error) {
+    console.error(error);
+    copyFeedback.value = '导出失败，请稍后重试或联系同事。';
+  } finally {
+    isDownloading.value = false;
+  }
 };
 
 onMounted(() => {

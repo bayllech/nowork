@@ -67,11 +67,7 @@
             <h2 class="font-display text-2xl font-bold text-ink">省市怒气排行榜</h2>
             <p class="text-sm text-muted">综合省份核心城市的怒气指数，仅展示最新敲击热力 Top 5。</p>
           </div>
-          <div class="flex items-center gap-2 text-xs text-muted">
-            <span class="inline-flex h-3 w-3 rounded-full bg-accent"></span> Lv.3+
-            <span class="inline-flex h-3 w-3 rounded-full bg-primary-strong/70"></span> Lv.2
-          </div>
-        </header>
+          </header>
         <div class="mt-6 grid gap-3">
           <article
             v-for="province in provinceLeaders"
@@ -85,7 +81,6 @@
             </span>
             <div class="flex min-w-0 flex-1 flex-col gap-1">
               <span class="truncate text-base font-semibold text-ink">{{ province.province }}</span>
-              <span class="text-xs font-semibold text-muted">怒气等级 Lv.{{ province.level }}</span>
             </div>
             <div class="text-right">
               <div class="text-sm font-bold text-primary-strong">
@@ -99,7 +94,7 @@
           </p>
         </div>
         <p class="mt-4 text-xs leading-relaxed text-muted">
-          数据按{{ stats.chinaPeriod === 'daily' ? '今日' : '累计' }}敲击量排序，每 15 分钟刷新一次；仅展示前 5 名，若数据接近则优先显示怒气等级更高的地区。
+          数据按{{ stats.chinaPeriod === 'daily' ? '今日' : '累计' }}敲击量排序，每 15 分钟刷新一次；仅展示前 5 名。
         </p>
       </aside>
     </main>

@@ -34,7 +34,11 @@ export default {
           subtle: '#eef0ff',
           light: '#eef0ff'
         },
-        accent: '#ff5f75',
+        accent: {
+          DEFAULT: '#ff5f75',
+          light: '#ff5f7533',
+          strong: '#ff3a59'
+        },
         surface: 'rgba(255,255,255,0.88)',
         ink: '#1f2033',
         muted: '#6f708f'
