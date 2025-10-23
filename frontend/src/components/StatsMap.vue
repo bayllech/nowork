@@ -102,7 +102,7 @@ const option = computed(() => ({
       name: props.mapType === 'china' ? '国内怒气' : '海外怒气',
       type: 'map' as const,
       map: props.mapType === 'china' ? 'china' : 'world',
-      roam: false,
+      roam: 'scale',
       emphasis: {
         label: {
           color: '#fff'
