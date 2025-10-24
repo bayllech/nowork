@@ -90,11 +90,12 @@
           </button>
           <div class="grid gap-6 md:grid-cols-[1.1fr_0.9fr] md:items-start">
             <article
+              ref="shareCardRef"
               class="grid gap-5 rounded-[18px] border border-primary/25 bg-white px-6 py-8 text-ink shadow-[0_22px_40px_rgba(65,55,255,0.18)]"
             >
               <header class="grid gap-2">
                 <div class="flex items-center justify-between">
-                  <span class="text-xs font-semibold uppercase tracking-[0.4em] text-primary-strong/70">nowork.click</span>
+                  <span class="text-xs font-semibold uppercase tracking-[0.4em] text-primary-strong/70">NOWORK.CLICK</span>
                   <span
                     class="inline-flex items-center gap-1 rounded-full bg-primary-light/60 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-primary-strong"
                   >
@@ -106,7 +107,7 @@
                   <span>{{ activeRoleTitle }}</span>
                 </div>
               </header>
-              <p class="text-lg leading-relaxed text-ink">
+              <p class="share-text text-lg leading-relaxed text-ink">
                 {{ sharePhrase }}
               </p>
               <div class="flex flex-wrap gap-3 text-sm text-ink/80">
@@ -133,11 +134,14 @@
                   <i class="fa-solid fa-copy"></i> 复制文案
                 </button>
                 <button
-                  class="inline-flex items-center justify-center gap-2 rounded-2xl border border-primary/60 bg-white px-4 py-3 text-sm font-semibold text-ink shadow-soft transition hover:bg-primary-light/50"
+                  class="inline-flex items-center justify-center gap-2 rounded-2xl border border-primary/60 bg-white px-4 py-3 text-sm font-semibold text-ink shadow-soft transition hover:bg-primary-light/50 disabled:opacity-50 disabled:cursor-not-allowed"
                   type="button"
-                  disabled
+                  :disabled="isDownloading"
+                  :aria-busy="isDownloading"
+                  @click="downloadShareCard"
                 >
-                  <i class="fa-solid fa-cloud-arrow-down"></i> 下载卡片（即将上线）
+                  <i :class="isDownloading ? 'fa-solid fa-spinner fa-spin' : 'fa-solid fa-cloud-arrow-down'"></i>
+                  {{ isDownloading ? '生成中...' : '下载卡片' }}
                 </button>
               </div>
               <p v-if="copyFeedback" class="rounded-full bg-primary-light/70 px-4 py-2 text-xs text-primary-strong">
@@ -157,12 +161,15 @@ import { useRoute } from 'vue-router';
 import NavigationBar from '../components/NavigationBar.vue';
 import AngerButton from '../components/AngerButton.vue';
 import { useRolesStore, useStatsStore } from '../stores';
+import { ImageGenerator } from '../utils/generateImage';
 
 const route = useRoute();
 const stats = useStatsStore();
 const roles = useRolesStore();
 const shareOpen = ref(false);
 const copyFeedback = ref('');
+const isDownloading = ref(false);
+const shareCardRef = ref<HTMLElement | null>(null);
 
 const formattedDailyCount = computed(() => stats.dailyCount.toLocaleString());
 const formattedTotalCount = computed(() => stats.totalCount.toLocaleString());
@@ -210,6 +217,62 @@ const handleHitSuccess = () => {
   copyFeedback.value = '';
 };
 
+const downloadShareCard = async () => {
+  if (!shareCardRef.value || isDownloading.value) return;
+
+  isDownloading.value = true;
+  copyFeedback.value = '正在生成图片...';
+
+  try {
+    // 使用 ImageGenerator 生成图片
+    const generator = ImageGenerator.getInstance();
+
+    // 等待DOM完全渲染
+    await new Promise(resolve => setTimeout(resolve, 300));
+
+    const result = await generator.generateShareCard(shareCardRef.value, {
+      width: 540,
+      height: 400,
+      quality: 1,
+      filename: `nowork-home-${Date.now()}.jpg`,
+      text: sharePhrase.value,
+      count: formattedDailyCount.value,
+      format: 'jpg',
+      backgroundColor: '#ffffff' // 白色背景
+    });
+
+    // 创建下载链接
+    const url = URL.createObjectURL(result.blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = result.filename;
+    anchor.style.display = 'none';
+
+    // 添加到DOM并触发下载
+    document.body.appendChild(anchor);
+    anchor.click();
+
+    // 清理资源
+    setTimeout(() => {
+      document.body.removeChild(anchor);
+      URL.revokeObjectURL(url);
+    }, 100);
+
+    copyFeedback.value = '🎉 吐槽卡已保存！快去分享你的怒气吧！';
+
+    // 延迟关闭弹窗
+    setTimeout(() => {
+      toggleShare(false);
+    }, 2000);
+
+  } catch (error) {
+    console.error('生成图片失败:', error);
+    copyFeedback.value = '生成失败，请稍后重试或直接截图';
+  } finally {
+    isDownloading.value = false;
+  }
+};
+
 onMounted(() => {
   syncRoleFromRoute();
   stats.fetchSummary('default');
@@ -232,5 +295,32 @@ watch(
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+}
+
+/* 确保分享卡片在生成图片时效果良好 */
+article[ref="shareCardRef"] {
+  /* 强制白色背景，确保生成图片时是纯白背景 */
+  background: #ffffff !important;
+  /* 提高文字对比度 */
+  color: #1a1a1a;
+  /* 确保边框清晰 */
+  border: 2px solid rgba(65, 55, 255, 0.25);
+}
+
+.share-text {
+  /* 确保主文案清晰可见 */
+  font-weight: 600;
+  color: #2d3436;
+  line-height: 1.6;
+  /* 文字阴影确保在白色背景上清晰 */
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* 移除可能影响图片生成的过渡效果 */
+@media print {
+  article[ref="shareCardRef"] {
+    box-shadow: none !important;
+    border: 2px solid #333;
+  }
 }
 </style>
