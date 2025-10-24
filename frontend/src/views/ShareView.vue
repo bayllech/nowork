@@ -87,29 +87,42 @@
 
         <!-- 搜索和筛选栏 -->
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div class="relative">
+          <div class="relative flex-1">
             <input
               type="text"
               placeholder="搜索文案..."
-              class="w-full sm:w-64 px-4 py-2 pl-10 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/30 transition-all"
+              v-model="searchKeyword"
+              class="w-full sm:w-64 px-4 py-2 pl-10 pr-10 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/30 transition-all"
             />
             <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+            <button
+              v-if="searchKeyword"
+              type="button"
+              class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+              @click="clearSearch"
+              aria-label="清空搜索"
+            >
+              <i class="fa-solid fa-circle-xmark"></i>
+            </button>
           </div>
-          <div class="text-xs text-muted">
-            共 {{ sharePhrases.length }} 条文案
+          <div class="text-xs text-muted flex items-center gap-1">
+            已加载 {{ sharePhrases.length }} 条文案
+            <span v-if="searchKeyword">· 匹配 {{ visiblePhrases.length }} 条</span>
+            <span v-else-if="shareMeta?.hasMore">· 下滑加载更多</span>
+            <span v-else>· 全部文案已加载</span>
           </div>
         </div>
 
         <!-- 优化的文案列表 -->
         <div class="space-y-3">
-          <div v-if="phrases.loading" class="flex items-center justify-center py-8">
+          <div v-if="phrases.loading && !sharePhrases.length" class="flex items-center justify-center py-8">
             <div class="flex items-center gap-2 text-sm text-muted">
               <div class="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
               文案加载中...
             </div>
           </div>
 
-          <div v-else-if="phrases.error" class="rounded-2xl border border-red-200 bg-red-50 p-4">
+          <div v-else-if="phrases.error && !sharePhrases.length" class="rounded-2xl border border-red-200 bg-red-50 p-4">
             <div class="flex items-start gap-3">
               <i class="fa-solid fa-exclamation-triangle text-red-500 mt-0.5"></i>
               <div class="flex-1">
@@ -124,7 +137,7 @@
 
           <div v-else class="space-y-3 max-h-[600px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100" data-phrase-list>
             <div
-              v-for="phrase in sharePhrases"
+              v-for="phrase in visiblePhrases"
               :key="phrase.id"
               class="group cursor-pointer rounded-2xl bg-white/80 px-4 py-3 text-sm text-muted shadow-inner transition-all duration-200 hover:shadow-md hover:bg-white/90 hover:-translate-y-0.5"
               :class="{
@@ -140,7 +153,7 @@
                   <div class="flex items-center gap-2 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
                     <span class="text-xs text-gray-400">
                       <i class="fa-solid fa-clock mr-1"></i>
-                      {{ phrase.id ? `#${phrase.id}` : '热门' }}
+                      {{ phrase.id > 0 ? `#${phrase.id}` : '热门' }}
                     </span>
                   </div>
                 </div>
@@ -151,7 +164,29 @@
             </div>
 
             <div
-              v-if="!sharePhrases.length"
+              v-if="phrases.error && sharePhrases.length && !searchKeyword"
+              class="rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3 text-xs text-amber-700"
+            >
+              加载更多文案失败：{{ phrases.error }}，可稍后重试。
+            </div>
+
+            <div
+              v-if="phrases.loading && sharePhrases.length && !searchKeyword"
+              class="flex items-center justify-center gap-2 py-4 text-xs text-muted"
+            >
+              <div class="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+              加载中...
+            </div>
+
+            <div
+              v-if="!searchKeyword && sharePhrases.length && !phrases.loading && !shareMeta?.hasMore"
+              class="py-3 text-center text-[11px] text-gray-400"
+            >
+              文案已全部展示
+            </div>
+
+            <div
+              v-if="!sharePhrases.length && !phrases.loading"
               class="rounded-2xl border border-dashed border-primary-light/60 px-6 py-8 text-center"
             >
               <i class="fa-solid fa-inbox text-3xl text-gray-300 mb-3"></i>
@@ -164,6 +199,15 @@
                 重新加载
               </button>
             </div>
+
+            <div
+              v-if="searchKeyword && sharePhrases.length && !visiblePhrases.length && !phrases.loading"
+              class="rounded-2xl border border-dashed border-primary-light/60 px-6 py-6 text-center text-xs text-muted"
+            >
+              未找到匹配 "{{ searchKeyword }}" 的文案，可尝试换个关键词。
+            </div>
+
+            <div v-if="!searchKeyword" ref="sentinelRef" class="h-2" aria-hidden="true"></div>
           </div>
         </div>
         <div class="rounded-3xl bg-primary-light/60 px-6 py-5 text-sm text-muted">
@@ -289,7 +333,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import NavigationBar from '../components/NavigationBar.vue';
 import { usePhrasesStore, useStatsStore } from '../stores';
 import { ImageGenerator } from '../utils/generateImage';
@@ -304,12 +348,25 @@ const showPreview = ref(false);
 const previewImageUrl = ref<string>('');
 const currentImageUrl = ref<string>('');
 const generatedBlob = ref<Blob | null>(null);
+const sentinelRef = ref<HTMLElement | null>(null);
+const searchKeyword = ref('');
+let observer: IntersectionObserver | null = null;
 
 const sharePhrases = computed(() => phrases.getPhrasesByPage('share'));
 const dailyCountLabel = computed(() => stats.dailyCount.toLocaleString());
 const generatedAt = computed(() =>
   stats.summaryTimestamp ? new Date(stats.summaryTimestamp).toLocaleTimeString() : new Date().toLocaleTimeString()
 );
+const shareMeta = computed(() => phrases.getMetaByPage('share'));
+const normalizedKeyword = computed(() => searchKeyword.value.trim());
+const isSearching = computed(() => normalizedKeyword.value.length > 0);
+const visiblePhrases = computed(() => {
+  if (!isSearching.value) {
+    return sharePhrases.value;
+  }
+  const keyword = normalizedKeyword.value.toLowerCase();
+  return sharePhrases.value.filter((phrase) => phrase.content.toLowerCase().includes(keyword));
+});
 
 const handlePhraseClick = (content: string) => {
   selectedPhrase.value = content;
@@ -417,9 +474,12 @@ const confirmDownload = async () => {
     document.body.appendChild(anchor);
 
     // 触发下载
-    if (navigator.msSaveOrOpenBlob) {
-      // IE/Edge 特殊处理
-      navigator.msSaveOrOpenBlob(generatedBlob.value, filename);
+    const msNavigator = navigator as Navigator & {
+      msSaveOrOpenBlob?: (blob: Blob, defaultName?: string) => boolean;
+    };
+    if (typeof msNavigator.msSaveOrOpenBlob === 'function') {
+      // IE/Edge 兼容处理
+      msNavigator.msSaveOrOpenBlob(generatedBlob.value, filename);
     } else {
       // 标准浏览器
       anchor.click();
@@ -465,19 +525,74 @@ const closePreview = () => {
   generatedBlob.value = null;
 };
 
-onMounted(() => {
-  phrases.fetchPhrases('share');
+const clearSearch = () => {
+  searchKeyword.value = '';
+};
+
+const loadMorePhrases = async () => {
+  if (isSearching.value) return;
+  if (phrases.loading) return;
+  if (!shareMeta.value?.hasMore) return;
+  await phrases.fetchPhrases('share', { append: true });
+};
+
+const setupObserver = async () => {
+  await nextTick();
+  if (observer) {
+    observer.disconnect();
+    observer = null;
+  }
+  if (isSearching.value) {
+    return;
+  }
+  const target = sentinelRef.value;
+  if (!target) return;
+  observer = new IntersectionObserver(async (entries) => {
+    const [entry] = entries;
+    if (entry?.isIntersecting) {
+      await loadMorePhrases();
+    }
+  }, { threshold: 0.2 });
+  observer.observe(target);
+};
+
+onMounted(async () => {
+  await phrases.fetchPhrases('share');
   stats.fetchSummary('default');
+  await setupObserver();
+});
+
+onUnmounted(() => {
+  if (observer) {
+    observer.disconnect();
+    observer = null;
+  }
 });
 
 watch(
-  sharePhrases,
-  (items) => {
-    if (!selectedPhrase.value && items.length > 0) {
-      const first = items[0];
-      if (first) {
-        selectedPhrase.value = first.content;
+  visiblePhrases,
+  async (items) => {
+    if (items.length === 0) {
+      if (isSearching.value) {
+        const existsInFull = sharePhrases.value.some((phrase) => phrase.content === selectedPhrase.value);
+        if (!existsInFull) {
+          selectedPhrase.value = null;
+        }
       }
+    } else {
+      const currentExists = selectedPhrase.value
+        ? items.some((phrase) => phrase.content === selectedPhrase.value)
+        : false;
+      if (!currentExists) {
+        selectedPhrase.value = items[0]?.content ?? null;
+      }
+    }
+
+    if (!isSearching.value) {
+      await setupObserver();
+    } else if (observer) {
+      observer.disconnect();
+      observer = null;
     }
   },
   { immediate: true }

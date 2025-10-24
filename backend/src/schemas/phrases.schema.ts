@@ -21,6 +21,19 @@ export const phrasesQuerySchema = z
         .int()
         .min(1)
         .max(200))
+      .optional(),
+    offset: z
+      .preprocess((value) => {
+        if (value === undefined) return undefined;
+        if (typeof value === 'string') {
+          const parsed = Number(value);
+          return Number.isNaN(parsed) ? undefined : parsed;
+        }
+        return value;
+      }, z
+        .number()
+        .int()
+        .min(0))
       .optional()
   })
   .passthrough();

@@ -60,32 +60,82 @@ export const getRandomPhrase = async (pool: MySQLPromisePool, page: string) => {
   return expanded[index];
 };
 
+export interface PhraseRow {
+  id: number;
+  content: string;
+  weight: number;
+}
+
+export interface ListPhrasesResult {
+  items: PhraseRow[];
+  hasMore: boolean;
+}
+
 export const listPhrases = async (
   pool: MySQLPromisePool,
   page: string,
-  limit: number
-) => {
+  limit: number,
+  offset = 0
+): Promise<ListPhrasesResult> => {
   const filteredPage = page || env.defaultPage;
-  const [rows] = await pool.query<
-    (RowDataPacket & { content: string; weight: number })[]
-  >(
-    `SELECT content, weight
-     FROM phrases
-     WHERE page IN (?, ?)
-     ORDER BY weight DESC, id DESC
-     LIMIT ?`,
-    [filteredPage, env.defaultPage, limit]
-  );
+  const includeAllPages = filteredPage === 'share';
+  const queryLimit = limit + 1;
 
-  if (rows.length === 0) {
-    const fallback = [
-      ...new Set([...((fallbackPhrases[filteredPage] ?? [])), ...(fallbackPhrases.default ?? [])])
-    ];
-    return fallback.slice(0, limit).map((content) => ({ content, weight: 1 }));
+  const sql = includeAllPages
+    ? `SELECT id, content, weight
+       FROM phrases
+       ORDER BY id ASC
+       LIMIT ? OFFSET ?`
+    : `SELECT id, content, weight
+       FROM phrases
+       WHERE page IN (?, ?)
+       ORDER BY id ASC
+       LIMIT ? OFFSET ?`;
+
+  const params = includeAllPages
+    ? [queryLimit, offset]
+    : [filteredPage, env.defaultPage, queryLimit, offset];
+
+  const [rows] = await pool.query<
+    (RowDataPacket & { id: number; content: string; weight: number })[]
+  >(sql, params);
+
+  const hasMore = rows.length > limit;
+  const effectiveRows = hasMore ? rows.slice(0, limit) : rows;
+
+  if (effectiveRows.length === 0) {
+    const fallbackPool = includeAllPages
+      ? [...new Set(Object.values(fallbackPhrases).flat())]
+      : [
+          ...new Set([
+            ...((fallbackPhrases[filteredPage] ?? [])),
+            ...(fallbackPhrases.default ?? [])
+          ])
+        ];
+
+    if (fallbackPool.length === 0) {
+      return { items: [], hasMore: false };
+    }
+
+    const slicedFallback = fallbackPool.slice(offset, offset + limit);
+    const items = slicedFallback.map((content, index) => ({
+      id: -(offset + index + 1),
+      content,
+      weight: 1
+    }));
+
+    return {
+      items,
+      hasMore: offset + limit < fallbackPool.length
+    };
   }
 
-  return rows.map((row) => ({
-    content: row.content,
-    weight: Number(row.weight ?? 1)
-  }));
+  return {
+    items: effectiveRows.map((row) => ({
+      id: Number(row.id),
+      content: row.content,
+      weight: Number(row.weight ?? 1)
+    })),
+    hasMore
+  };
 };

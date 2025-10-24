@@ -80,7 +80,11 @@ export interface GlobalStatsResponse {
 export interface PhraseListResponse {
   page: string;
   count: number;
-  phrases: Array<{ content: string; weight: number }>;
+  limit: number;
+  offset: number;
+  nextOffset: number;
+  hasMore: boolean;
+  phrases: Array<{ id: number; content: string; weight: number }>;
 }
 
 export interface StatsSummaryResponse {
@@ -140,10 +144,11 @@ export const getGlobalStats = (params: { period: 'daily' | 'total'; page?: strin
   return request<GlobalStatsResponse>(`/api/stats/global?${query.toString()}`);
 };
 
-export const getPhrases = (params: { page?: string; limit?: number }) => {
+export const getPhrases = (params: { page?: string; limit?: number; offset?: number }) => {
   const searchParams = new URLSearchParams({
     ...(params.page ? { page: params.page } : {}),
-    ...(params.limit ? { limit: String(params.limit) } : {})
+    ...(params.limit !== undefined ? { limit: String(params.limit) } : {}),
+    ...(params.offset !== undefined ? { offset: String(params.offset) } : {})
   });
   const queryString = searchParams.toString();
   const suffix = queryString ? `?${queryString}` : '';

@@ -11,16 +11,22 @@ export default async function phrasesRoutes(app: FastifyInstance) {
       return reply.badRequest(message);
     }
 
-    const { page, limit } = parseResult.data;
+    const { page, limit, offset } = parseResult.data;
     const targetPage = page ?? env.defaultPage;
     const size = limit ?? 20;
+    const startOffset = offset ?? 0;
 
-    const phrases = await listPhrases(app.mysql, targetPage, size);
+    const { items, hasMore } = await listPhrases(app.mysql, targetPage, size, startOffset);
+    const nextOffset = startOffset + items.length;
 
     return reply.send({
       page: targetPage,
-      count: phrases.length,
-      phrases
+      limit: size,
+      offset: startOffset,
+      nextOffset,
+      count: items.length,
+      hasMore,
+      phrases: items
     });
   });
 }

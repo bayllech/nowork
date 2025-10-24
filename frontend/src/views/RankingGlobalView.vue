@@ -165,30 +165,6 @@ const globalBarData = computed(() =>
   }))
 );
 
-const countryHighlights = computed(() =>
-  stats.globalCountries.slice(0, 8).map((country, index) => ({
-    ...country,
-    rank: index + 1,
-    highlight: highlightText(country.country)
-  }))
-);
-
-const highlightText = (country: string) => {
-  switch (country) {
-    case '美国':
-    case 'United States':
-      return '反内卷联盟呼声最高，连续 4 小时保持高热。';
-    case '日本':
-      return '加班文化深度焦虑，怒气曲线持续走高。';
-    case '新加坡':
-      return '金融圈 KPI 洪水猛兽，怒气暴增 36%。';
-    case '德国':
-      return '项目计划 + 严谨文化，怒气指数稳居前三。';
-    default:
-      return '怒气指数持续走高，正在呼唤更多共鸣。';
-  }
-};
-
 const periodClass = (period: 'daily' | 'total') => {
   const isActive = stats.globalPeriod === period;
   return isActive

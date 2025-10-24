@@ -35,11 +35,16 @@ export class ImageGenerator {
       height = 400,
       quality = 1,
       filename = this.generateFilename(),
-      text,
+      text: customText,
       count,
       format = 'png',
-      backgroundColor = null
+      backgroundColor = '#ffffff'
     } = options;
+
+    const textElement = element.querySelector('.share-text') as HTMLElement | null;
+    const resolvedText = customText ?? textElement?.textContent?.trim() ?? '默认文案';
+    const resolvedCount = typeof count === 'number' ? count.toString() : (count ?? '0');
+
 
     try {
       // 方案1: 直接截图元素
@@ -54,7 +59,7 @@ export class ImageGenerator {
         width: ${width}px;
         height: ${height}px;
         z-index: -9999;
-        background: #ffffff;
+        background: ${backgroundColor};
       `;
 
       // 创建简化版本的HTML结构
@@ -69,12 +74,9 @@ export class ImageGenerator {
         padding: 40px;
         box-sizing: border-box;
         position: relative;
-        background: #ffffff;
+        background: ${backgroundColor};
       `;
 
-      // 获取文本内容
-      const textElement = element.querySelector('.share-text') as HTMLElement;
-      const text = text || textElement?.textContent || '默认文案';
 
       // 创建纯文本内容，避免背景干扰
       simplifiedContent.innerHTML = `
@@ -87,7 +89,7 @@ export class ImageGenerator {
           margin-bottom: 20px;
           text-shadow: 2px 2px 4px rgba(255,255,255,0.8), -2px -2px 4px rgba(255,255,255,0.8);
           word-wrap: break-word;
-        ">${text}</div>
+        ">${resolvedText}</div>
         <div style="
           color: #e94560;
           font-size: 24px;
@@ -116,7 +118,7 @@ export class ImageGenerator {
           position: absolute;
           bottom: 40px;
           text-shadow: 2px 2px 4px rgba(255,255,255,0.9);
-        ">⚡ 团队共鸣 ${count || '0'} 次</div>
+        ">⚡ 团队共鸣 ${resolvedCount} 次</div>
       `;
 
       container.appendChild(simplifiedContent);
@@ -127,7 +129,7 @@ export class ImageGenerator {
 
       // 使用 html2canvas
       const canvas = await html2canvas(simplifiedContent, {
-        backgroundColor: '#ffffff', // 纯白背景
+        backgroundColor, // 纯白背景
         scale: 2,
         useCORS: true,
         allowTaint: true,
@@ -148,7 +150,7 @@ export class ImageGenerator {
           // 设置容器背景为白色
           const container = clonedDoc.querySelector('div') as HTMLElement;
           if (container) {
-            container.style.backgroundColor = '#ffffff';
+            container.style.backgroundColor = backgroundColor;
           }
         }
       });
@@ -180,7 +182,7 @@ export class ImageGenerator {
 
       // 备用方案：手动Canvas渲染
       console.log('使用手动Canvas渲染...');
-      return await this.manualRender(element, filename, text, count, format, backgroundColor);
+      return await this.manualRender(element, filename, resolvedText, resolvedCount, format, backgroundColor);
     }
   }
 
@@ -188,7 +190,14 @@ export class ImageGenerator {
   /**
    * 手动Canvas渲染（备用方案）- 纯文字透明背景
    */
-  private async manualRender(element: HTMLElement, filename: string, text?: string, count?: string | number, format?: 'png' | 'jpg', backgroundColor?: string): Promise<{ blob: Blob; url: string; filename: string }> {
+  private async manualRender(
+    element: HTMLElement,
+    filename: string,
+    text: string,
+    count: string,
+    format: 'png' | 'jpg',
+    backgroundColor: string
+  ): Promise<{ blob: Blob; url: string; filename: string }> {
     const canvas = document.createElement('canvas');
     canvas.width = 1080;
     canvas.height = 800;
@@ -198,107 +207,20 @@ export class ImageGenerator {
       throw new Error('Cannot get canvas context');
     }
 
-    // 启用高质量渲染
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = 'high';
 
-    // 使用传入的文本或从元素获取
-    const finalText = text || element.querySelector('.share-text')?.textContent || '默认文案';
+    const fallbackText = element.querySelector('.share-text')?.textContent?.trim();
+    const finalText = (text ?? '').trim() || fallbackText || '默认文案';
+    const finalCount = (count ?? '').trim() || '0';
 
-    // 绘制白色背景
-    ctx.fillStyle = '#ffffff';
+    ctx.fillStyle = backgroundColor;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // 设置文字基线
-    ctx.textBaseline = 'middle';
+    this.drawDecorations(ctx);
+    this.drawCard(ctx);
+    this.drawContent(ctx, finalText, finalCount);
 
-    // 绘制主文案 - 居中显示
-    ctx.font = 'bold 72px Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-    ctx.textAlign = 'center';
-
-    // 文字自动换行
-    const maxWidth = 900;
-    const lineHeight = 100;
-    const words = finalText.split('');
-    const lines: string[] = [];
-    let currentLine = '';
-
-    for (const char of words) {
-      const testLine = currentLine + char;
-      const metrics = ctx.measureText(testLine);
-
-      if (metrics.width > maxWidth && currentLine.length > 0) {
-        lines.push(currentLine);
-        currentLine = char;
-      } else {
-        currentLine = testLine;
-      }
-    }
-    if (currentLine) lines.push(currentLine);
-
-    // 绘制每行文字，带白色描边
-    const startY = (canvas.height - (lines.length - 1) * lineHeight) / 2;
-    lines.forEach((line, index) => {
-      const y = startY + index * lineHeight;
-
-      // 白色描边（外发光效果）
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 12;
-      ctx.strokeText(line, canvas.width / 2, y);
-
-      // 填充黑色文字
-      ctx.fillStyle = '#2d3436';
-      ctx.fillText(line, canvas.width / 2, y);
-    });
-
-    // 绘制网站名称 - 左上角
-    ctx.font = 'bold 36px Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-    ctx.textAlign = 'left';
-    const siteName = 'NOWORK.CLICK';
-
-    // 白色描边
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 8;
-    ctx.strokeText(siteName, 80, 80);
-
-    // 红色填充
-    ctx.fillStyle = '#e94560';
-    ctx.fillText(siteName, 80, 80);
-
-    // 绘制状态标签 - 右上角
-    ctx.font = 'bold 28px Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-    ctx.textAlign = 'center';
-    const statusText = '🔥 怒气高涨';
-
-    // 绘制背景
-    const statusWidth = 200;
-    const statusHeight = 60;
-    const statusX = canvas.width - statusWidth - 80;
-    const statusY = 50;
-
-    ctx.fillStyle = '#e94560';
-    this.roundRect(ctx, statusX, statusY, statusWidth, statusHeight, 30);
-    ctx.fill();
-
-    // 白色文字
-    ctx.fillStyle = '#ffffff';
-    ctx.fillText(statusText, statusX + statusWidth / 2, statusY + statusHeight / 2);
-
-    // 绘制底部信息 - 居中底部
-    ctx.font = '600 40px Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-    ctx.textAlign = 'center';
-    const bottomText = `⚡ 团队共鸣 ${count || '0'} 次`;
-
-    // 白色描边
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 10;
-    ctx.strokeText(bottomText, canvas.width / 2, canvas.height - 80);
-
-    // 灰色填充
-    ctx.fillStyle = '#636e72';
-    ctx.fillText(bottomText, canvas.width / 2, canvas.height - 80);
-
-    // 生成Blob
     const mimeType = format === 'jpg' ? 'image/jpeg' : 'image/png';
     const blob = await new Promise<Blob>((resolve) => {
       canvas.toBlob((blob) => {
@@ -313,6 +235,7 @@ export class ImageGenerator {
     const url = URL.createObjectURL(blob);
     return { blob, url, filename };
   }
+
 
   /**
    * 绘制装饰性元素
@@ -336,14 +259,14 @@ export class ImageGenerator {
   /**
    * 绘制卡片 - 移除背景，保持透明
    */
-  private drawCard(ctx: CanvasRenderingContext2D): void {
+  private drawCard(_ctx: CanvasRenderingContext2D): void {
     // 不绘制任何背景，保持透明
   }
 
   /**
    * 绘制内容
    */
-  private drawContent(ctx: CanvasRenderingContext2D, text: string): void {
+  private drawContent(ctx: CanvasRenderingContext2D, text: string, count: string): void {
     // 绘制网站名称 - 添加描边效果
     ctx.font = 'bold 36px Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
     ctx.textAlign = 'left';
@@ -408,7 +331,7 @@ export class ImageGenerator {
 
     // 绘制底部文字 - 添加描边效果
     ctx.font = '600 40px Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-    const bottomText = '⚡ 团队共鸣 999 次';
+    const bottomText = `⚡ 团队共鸣 ${count} 次`;
 
     // 先绘制白色描边
     ctx.strokeStyle = '#ffffff';
