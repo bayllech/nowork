@@ -1,5 +1,5 @@
 <template>
-  <div class="mx-auto flex min-h-screen max-w-6xl flex-col gap-10 px-6 pb-12 pt-12">
+  <div class="mx-auto flex min-h-screen max-w-6xl flex-col gap-10 px-6 pb-12 pt-6">
     <NavigationBar context-label="全国怒气监控台" />
     <main class="grid gap-8 md:grid-cols-[1.5fr_1fr] md:items-stretch">
       <section class="space-y-6 rounded-3xl bg-white/90 px-8 pb-0 pt-8 shadow-card backdrop-blur">

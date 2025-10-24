@@ -1,5 +1,5 @@
 <template>
-  <div class="mx-auto flex min-h-screen max-w-6xl flex-col gap-10 px-6 pb-24 pt-12">
+  <div class="mx-auto flex min-h-screen max-w-6xl flex-col gap-10 px-6 pb-24 pt-6">
     <NavigationBar context-label="全球打工人怒气榜" />
     <main class="grid gap-8 lg:grid-cols-[1fr_380px]">
       <!-- 左侧内容 -->

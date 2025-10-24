@@ -1,5 +1,5 @@
 <template>
-  <div class="mx-auto flex min-h-screen max-w-7xl flex-col gap-8 px-4 sm:px-6 pb-24 pt-12">
+  <div class="mx-auto flex min-h-screen max-w-7xl flex-col gap-8 px-4 sm:px-6 pb-24 pt-6">
     <NavigationBar context-label="吐槽卡工作室 · 文案 / 图片 / 分享" />
     <main class="grid gap-6 lg:gap-8 lg:grid-cols-[1.2fr_0.8fr] lg:items-start">
       <section class="grid gap-6 rounded-3xl bg-white/90 p-6 sm:p-8 shadow-card backdrop-blur">

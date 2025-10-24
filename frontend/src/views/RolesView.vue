@@ -1,5 +1,5 @@
 <template>
-  <div class="mx-auto flex min-h-screen max-w-7xl flex-col gap-10 px-4 sm:px-6 lg:px-8 pb-24 pt-12">
+  <div class="mx-auto flex min-h-screen max-w-7xl flex-col gap-10 px-4 sm:px-6 lg:px-8 pb-24 pt-6">
     <NavigationBar context-label="怒气角色" />
     <main class="space-y-8">
       <section class="space-y-6 rounded-3xl bg-white/90 p-6 sm:p-8 shadow-card backdrop-blur">
