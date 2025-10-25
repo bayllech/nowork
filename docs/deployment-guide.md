@@ -13,28 +13,33 @@
 
 ## 2. 构建与启动
 1. 登录服务器后执行：
-   ```bash
-   docker compose -f docker/docker-compose.prod.yml pull
-   docker compose -f docker/docker-compose.prod.yml build --no-cache
-   docker compose -f docker/docker-compose.prod.yml up -d
-   ```
-   - `pull` 优先尝试使用现有基础镜像；
-   - `build` 会打包后端与前端镜像；
-   - `up -d` 以后台方式启动 Nginx、Backend、MySQL、Redis 与静态资源服务。
+  ```bash
+  docker compose -f docker/docker-compose.prod.yml build --no-cache
+  docker compose -f docker/docker-compose.prod.yml up -d
+  ```
+  - `build` 会打包后端与前端镜像；
+  - `up -d` 以后台方式启动 Nginx、Backend、MySQL、Redis 与静态资源服务。
 2. 首次部署建议通过 `docker compose -f docker/docker-compose.prod.yml logs -f backend` 与 `logs -f nginx` 观察启动是否正常。
 
-## 3. 部署后验证
+## 3. 初始化数据库
+- 首次部署需初始化数据表与示例数据：
+  ```bash
+  docker compose -f docker/docker-compose.prod.yml exec backend pnpm run db:init
+  ```
+  该脚本会读取 `.env.prod` 内的数据库凭证，自动创建表结构与基础数据。如不需要示例数据，可在运行命令前设置 `SKIP_SEED=true`（具体逻辑可按需扩展脚本）。
+
+## 4. 部署后验证
 - **自检接口**：访问 `http://<服务器IP>/health`，确认后端返回状态 200。
 - **页面访问**：在浏览器打开 `http://<服务器IP>`，确保前端加载成功且接口无跨域报错。
 - **容器状态**：`docker compose -f docker/docker-compose.prod.yml ps` 应显示全部服务为 `Up`。
 - **日志检查**：查看 `logs/nginx`、后端容器日志是否存在异常。
 
-## 4. Cloudflare 接入
+## 5. Cloudflare 接入
 1. 在 Cloudflare DNS 面板新增 A 记录指向服务器公网 IP，启用代理。
 2. 打开 “Always Use HTTPS”“Auto Minify”“Cache by Device Type”等策略依据需求配置。
 3. 若使用 Cloudflare 终止 TLS，可继续使用 HTTP 回源；否则在服务器上准备证书，扩展 `nginx.conf` 增加 `listen 443 ssl` 并挂载证书文件。
 
-## 5. 更新与回滚
+## 6. 更新与回滚
 - **更新版本**：
   ```bash
   git pull
@@ -45,11 +50,11 @@
 - **回滚**：如需恢复上一版本，可指定旧镜像标签或使用 `git checkout` 回退代码后重新执行构建。
 - **资源清理**：部署完成后可定期执行 `docker image prune -f` 清理悬空镜像，避免磁盘占满（谨慎操作）。
 
-## 6. 故障排查
+## 7. 故障排查
 - **端口冲突**：若 `80` / `443` 已被占用，先释放端口或在 `docker-compose.prod.yml` 中调整宿主机映射。
-- **数据持久化**：MySQL、Redis、日志均挂载至宿主机目录，迁移服务器时记得同时打包这些目录。
+- **数据持久化**：MySQL、Redis、日志均挂载至宿主机目录，迁移服务器时记得同时打包这些目录；如需重置数据库，可 `docker compose ... down` 后清空 `data/mysql/*` 再重新 `up` 并执行初始化脚本。
 - **性能调优**：若访问量较大，可在 Cloudflare 开启缓存、Rate Limiting，并考虑单独托管 MySQL/Redis。
 
-## 7. 后续建议
+## 8. 后续建议
 - 将 `docker compose -f docker/docker-compose.prod.yml up -d --build` 集成到 CI/CD 流程，结合 Git 标签或版本号管理镜像。
 - 根据业务需求在 `docs/` 目录补充监控、告警与备份策略文档，确保线上可观测性与可恢复性。

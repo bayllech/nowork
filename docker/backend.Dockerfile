@@ -24,6 +24,8 @@ RUN apk add --no-cache curl
 RUN npm install -g pnpm@10.18.2
 COPY --from=deps /app/backend/node_modules ./node_modules
 COPY --from=builder /app/backend/dist ./dist
+COPY --from=builder /app/backend/scripts ./scripts
+COPY --from=builder /app/backend/sql ./sql
 COPY backend/package.json backend/pnpm-lock.yaml* ./
 EXPOSE 3000
 CMD ["node", "dist/main.js"]

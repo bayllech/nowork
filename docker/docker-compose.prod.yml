@@ -3,19 +3,20 @@ services:
     build:
       context: ..
       dockerfile: docker/backend.Dockerfile
+      target: runner
     image: nowork-backend:latest
     restart: unless-stopped
     env_file:
       - ../.env.prod
     environment:
       - NODE_ENV=production
-      - MYSQL_HOST=mysql
-      - REDIS_HOST=redis
     volumes:
       - ../data/ip2region.xdb:/app/ip2region.xdb:ro
     depends_on:
-      - mysql
-      - redis
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - appnet
 
@@ -28,13 +29,13 @@ services:
       - --collation-server=utf8mb4_unicode_ci
     env_file:
       - ../.env.prod
-    environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     volumes:
       - ../data/mysql:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - appnet
 

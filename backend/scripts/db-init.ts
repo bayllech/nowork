@@ -5,12 +5,15 @@ import mysql from 'mysql2/promise';
 import { config } from 'dotenv';
 
 const loadEnv = () => {
-  const envPath = path.resolve(process.cwd(), '../.env.dev');
-  if (fs.existsSync(envPath)) {
-    config({ path: envPath });
-  } else {
-    config();
+  const candidates = ['../.env.dev', '../.env.prod', '../.env'];
+  for (const candidate of candidates) {
+    const envPath = path.resolve(process.cwd(), candidate);
+    if (fs.existsSync(envPath)) {
+      config({ path: envPath });
+      return;
+    }
   }
+  config();
 };
 
 const readSql = (fileName: string) => {
