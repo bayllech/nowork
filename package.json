@@ -1,11 +1,8 @@
 {
   "name": "nowork",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "directories": {
-    "doc": "docs"
-  },
+  "private": true,
+  "description": "nowork 仓库根目录脚本配置",
   "scripts": {
     "test": "pnpm run test:all",
     "test:all": "node scripts/test-all.mjs"
@@ -17,16 +14,8 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
   "bugs": {
     "url": "https://github.com/bayllech/nowork/issues"
   },
-  "homepage": "https://github.com/bayllech/nowork#readme",
-  "dependencies": {
-    "@tailwindcss/forms": "^0.5.10",
-    "autoprefixer": "^10.4.21",
-    "font-awesome": "^4.7.0",
-    "postcss": "^8.5.6",
-    "tailwindcss": "^4.1.15"
-  }
+  "homepage": "https://github.com/bayllech/nowork#readme"
 }
