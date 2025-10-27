@@ -27,3 +27,6 @@ docker/*.pid
 Thumbs.db
 .DS_Store
 .claude
+
+docker/ssl/cert.pem
+docker/ssl/key.pem
