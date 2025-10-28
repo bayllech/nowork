@@ -11,7 +11,8 @@ services:
     environment:
       - NODE_ENV=production
     volumes:
-      - ../data/ip2region.xdb:/app/ip2region.xdb:ro
+      - ../data/ip2region.db:/app/ip2region.db:ro
+      - ../data/ipv6wry.db:/app/ipv6wry.db:ro
     depends_on:
       mysql:
         condition: service_healthy

@@ -16,7 +16,8 @@ services:
     volumes:
       - ../backend:/app/backend
       - backend_node_modules:/app/backend/node_modules
-      - ../data/ip2region.xdb:/app/ip2region.xdb:ro
+      - ../data/ip2region.db:/app/ip2region.db:ro
+      - ../data/ipv6wry.db:/app/ipv6wry.db:ro
     ports:
       - "3000:3000"
     depends_on:

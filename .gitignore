@@ -17,7 +17,6 @@ tmp/
 *.tmp
 
 # Database & cache artifacts
-data/ip2region.db
 data/*.log
 
 # Docker
