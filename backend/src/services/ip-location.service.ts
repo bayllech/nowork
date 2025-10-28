@@ -4,6 +4,7 @@ import IP2Region from 'ip2region';
 import type { IP2RegionOpts, IP2RegionResult } from 'ip2region';
 import { env } from '../config/env';
 import { logger } from '../utils/logger';
+import { isPublicIp } from '../utils/ip';
 
 export interface RegionInfo {
   country: string;
@@ -103,6 +104,9 @@ const normalizeIp = (ip: string) => {
   }
   if (ip === '::1') {
     return '127.0.0.1';
+  }
+  if (!isPublicIp(ip)) {
+    return '';
   }
   return ip;
 };
