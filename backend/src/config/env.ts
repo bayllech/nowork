@@ -47,6 +47,7 @@ export const env = {
     cron: process.env.CLICK_FLUSH_CRON ?? '*/1 * * * *'
   },
   ip2regionPath: process.env.IP2REGION_PATH ?? 'ip2region.db',
+  ip2regionIpv6Path: process.env.IP2REGION_IPV6_PATH ?? 'ipv6wry.db',
   defaultPage: process.env.DEFAULT_PAGE ?? 'default',
   logLevel: process.env.LOG_LEVEL ?? 'info'
 };

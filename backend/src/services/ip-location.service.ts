@@ -1,39 +1,100 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import IP2Region from 'ip2region';
+import type { IP2RegionOpts, IP2RegionResult } from 'ip2region';
 import { env } from '../config/env';
 import { logger } from '../utils/logger';
-
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const IP2Region = require('ip2region');
 
 export interface RegionInfo {
   country: string;
   province: string;
   city: string;
   region: string;
+  isp: string;
 }
 
-const resolveIp2regionPath = () => {
-  const moduleDir = path.dirname(require.resolve('ip2region'));
-  const packageRoot = path.resolve(moduleDir, '..');
+const UNKNOWN_TEXT = '未知';
+const DEFAULT_IPV4_DB = 'ip2region.db';
+const DEFAULT_IPV6_DB = 'ipv6wry.db';
 
-  const candidatePaths = [
-    env.ip2regionPath,
-    path.resolve(env.ip2regionPath),
-    path.resolve(process.cwd(), env.ip2regionPath),
-    path.join(packageRoot, 'data/ip2region.db')
-  ];
+const trimValue = (value?: string | null) => {
+  if (!value) {
+    return '';
+  }
+  const trimmed = value.trim();
+  return trimmed;
+};
 
-  for (const candidate of candidatePaths) {
-    if (candidate && fs.existsSync(candidate)) {
+const asText = (value?: string | null) => {
+  const trimmed = trimValue(value);
+  return trimmed || UNKNOWN_TEXT;
+};
+
+const resolvePackageRoot = () => {
+  const packageJsonPath = require.resolve('ip2region/package.json');
+  return path.dirname(packageJsonPath);
+};
+
+const addCandidate = (collection: Set<string>, candidate?: string | null) => {
+  if (!candidate) return;
+  collection.add(candidate);
+};
+
+const resolveDbPath = (
+  label: string,
+  configuredPath: string | undefined,
+  defaultFilename: string,
+  required: boolean
+) => {
+  const packageRoot = resolvePackageRoot();
+  const candidates = new Set<string>();
+
+  const normalizedConfigured = trimValue(configuredPath);
+  if (normalizedConfigured) {
+    addCandidate(candidates, normalizedConfigured);
+    addCandidate(candidates, path.resolve(normalizedConfigured));
+    addCandidate(candidates, path.resolve(process.cwd(), normalizedConfigured));
+  }
+
+  const fallbackFilename = normalizedConfigured || defaultFilename;
+  addCandidate(candidates, path.resolve(process.cwd(), fallbackFilename));
+  addCandidate(candidates, path.resolve(process.cwd(), 'backend', 'data', fallbackFilename));
+  addCandidate(candidates, path.resolve(process.cwd(), 'data', fallbackFilename));
+  addCandidate(candidates, path.join(packageRoot, 'data', defaultFilename));
+
+  for (const candidate of candidates) {
+    if (fs.existsSync(candidate)) {
       return candidate;
     }
   }
 
-  throw new Error('未找到 ip2region 数据库文件，请检查 IP2REGION_PATH 配置');
+  if (normalizedConfigured) {
+    throw new Error(`${label} 文件不存在: ${normalizedConfigured}`);
+  }
+
+  if (required) {
+    throw new Error(`${label} 文件未找到，请检查部署配置`);
+  }
+
+  return null;
 };
 
-const ip2region = new IP2Region({ dbPath: resolveIp2regionPath(), inMemory: true });
+const buildIp2regionInstance = () => {
+  const opts: IP2RegionOpts = {};
+  const ipv4Path = resolveDbPath('ip2region IPv4', env.ip2regionPath, DEFAULT_IPV4_DB, true);
+  const ipv6Path = resolveDbPath('ip2region IPv6', env.ip2regionIpv6Path, DEFAULT_IPV6_DB, false);
+
+  if (ipv4Path) {
+    opts.ipv4db = ipv4Path;
+  }
+  if (ipv6Path) {
+    opts.ipv6db = ipv6Path;
+  }
+
+  return new IP2Region(opts);
+};
+
+const ip2region = buildIp2regionInstance();
 
 const normalizeIp = (ip: string) => {
   if (!ip) return '';
@@ -46,6 +107,21 @@ const normalizeIp = (ip: string) => {
   return ip;
 };
 
+const toRegionInfo = (result: IP2RegionResult): RegionInfo => {
+  const country = asText(result.country);
+  const province = asText(result.province);
+  const city = asText(result.city);
+  const isp = asText(result.isp);
+
+  return {
+    country,
+    province,
+    city,
+    region: province !== UNKNOWN_TEXT ? province : city,
+    isp
+  };
+};
+
 export const lookupRegion = (ip: string): RegionInfo | null => {
   const targetIp = normalizeIp(ip);
   if (!targetIp) {
@@ -53,16 +129,11 @@ export const lookupRegion = (ip: string): RegionInfo | null => {
   }
 
   try {
-    const result = ip2region.search(targetIp) as RegionInfo | null;
+    const result = ip2region.search(targetIp);
     if (!result) {
       return null;
     }
-    return {
-      country: result.country ?? '未知',
-      province: result.province ?? '未知',
-      city: result.city ?? '未知',
-      region: result.region ?? result.province ?? '未知'
-    };
+    return toRegionInfo(result);
   } catch (error) {
     logger.warn({ err: error }, 'IP 定位失败');
     return null;

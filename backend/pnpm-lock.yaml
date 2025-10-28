@@ -39,8 +39,8 @@ importers:
         specifier: ^5.4.1
         version: 5.8.2
       ip2region:
-        specifier: ^1.8.0
-        version: 1.8.0
+        specifier: ^2.3.0
+        version: 2.3.0(@types/node@20.19.22)
       mysql2:
         specifier: ^3.15.2
         version: 3.15.2
@@ -392,8 +392,10 @@ packages:
     resolution: {integrity: sha512-C6uC+kleiIMmjViJINWk80sOQw5lEzse1ZmvD+S/s8p8CWapftSaC+kocGTx6xrbrJ4WmYQGC08ffHLr6ToR6Q==, tarball: https://registry.npmmirror.com/ioredis/-/ioredis-5.8.2.tgz}
     engines: {node: '>=12.22.0'}
 
-  ip2region@1.8.0:
-    resolution: {integrity: sha512-3k+4oMUFTKCLSy/5ejAqNgYJPgggpbpM3Gu7rnenXSuViPWIikUOUk1R/hSFcGOflBV+3zhIRPseyW9XisD1Jw==}
+  ip2region@2.3.0:
+    resolution: {integrity: sha512-zV5Xsadzrx9Ej6heoyhbXMsfGWWQ3C6bAIYStrHhw9kzLpGpVNlnAyRBxxPgxA1GNqr1Ti7oUxcWsMWNN3jZBg==, tarball: https://registry.npmmirror.com/ip2region/-/ip2region-2.3.0.tgz}
+    peerDependencies:
+      '@types/node': '*'
 
   ipaddr.js@2.2.0:
     resolution: {integrity: sha512-Ag3wB2o37wslZS19hZqorUnrnzSkpOVy+IiiDEiTqNubEYpYuHWIf6K4psgN2ZWKExS4xhVCrRVfb/wfW8fWJA==}
@@ -893,7 +895,9 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  ip2region@1.8.0: {}
+  ip2region@2.3.0(@types/node@20.19.22):
+    dependencies:
+      '@types/node': 20.19.22
 
   ipaddr.js@2.2.0: {}
 
