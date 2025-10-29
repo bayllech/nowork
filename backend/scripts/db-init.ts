@@ -35,6 +35,20 @@ const seedPhrasesIfNeeded = async (connection: mysql.Connection) => {
   console.log('✅ 吐槽文案已初始化');
 };
 
+const seedRolesIfNeeded = async (connection: mysql.Connection) => {
+  const rolesSchema = readSql('roles.sql');
+  await connection.query(rolesSchema);
+
+  const [rows] = await connection.query<{ total: number }[]>(`SELECT COUNT(*) AS total FROM roles;`);
+  if ((rows[0]?.total ?? 0) > 0) {
+    return;
+  }
+
+  const seedSql = readSql('seed_roles.sql');
+  await connection.query(seedSql);
+  console.log('✅ 角色数据已初始化');
+};
+
 interface SeedRegionInput {
   country: string;
   province: string;
@@ -128,6 +142,7 @@ const run = async () => {
     console.log('✅ 数据表结构检查完成');
 
     await seedPhrasesIfNeeded(connection);
+    await seedRolesIfNeeded(connection);
     await seedStatsIfNeeded(connection);
 
     console.log('🎉 数据库初始化完成');
